@@ -27,28 +27,38 @@ async function main() {
   const doc = window.document;
   const evalState = expr => window.eval(expr);
 
+  assert.strictEqual(doc.documentElement.dataset.theme, "blood", "blood theme is default");
+  assert.strictEqual(doc.querySelectorAll("#themeRow .tdot").length, 5);
+  assert.strictEqual(doc.querySelectorAll("#fontRow .fchip").length, 5);
+  click(doc.querySelector('#themeRow [data-theme="abyss"]'));
+  assert.strictEqual(doc.documentElement.dataset.theme, "abyss", "theme switching works");
+  click(doc.querySelector('#themeRow [data-theme="blood"]'));
+
+  const custom = doc.getElementById("customColor");
+  custom.value = "#123456";
+  custom.dispatchEvent(new window.Event("input", { bubbles: true }));
+
   const addPlayer = name => {
     doc.getElementById("pname").value = name;
     click(doc.getElementById("addBtn"));
   };
 
   addPlayer("A");
+  assert.strictEqual(evalState("S.players[0].color"), "#123456", "custom color picker applies to new player");
+  const aDot = doc.querySelector('#playerList [data-cid="' + evalState("S.players[0].id") + '"]');
+  aDot.value = "#22d3ee";
+  aDot.dispatchEvent(new window.Event("change", { bubbles: true }));
+  assert.strictEqual(evalState("S.players[0].color"), "#22d3ee", "per-player color picker works");
+
   addPlayer("B");
   addPlayer("C");
   addPlayer("D");
   assert.strictEqual(evalState("S.players.length"), 4);
-  assert.strictEqual(doc.getElementById("startBtn").disabled, false);
 
-  click(doc.getElementById("startBtn"));
-  assert.strictEqual(evalState("S.phase"), "reveal");
-  const impId = evalState("S.current.imposterId");
-  assert.ok(impId);
-  assert.strictEqual(evalState("S.players.some(p => p.id === S.current.imposterId)"), true);
-
-  const revealAll = ids => {
+  const revealAll = () => {
+    const ids = evalState("S.players.map(p => p.id)");
     for (const id of ids) {
-      const tile = doc.querySelector('#revealGrid [data-p="' + id + '"]');
-      click(tile);
+      click(doc.querySelector('#revealGrid [data-p="' + id + '"]'));
       click(doc.getElementById("ovStart"));
       const zone = doc.getElementById("holdZone");
       zone.dispatchEvent(new window.Event("pointerdown", { bubbles: true }));
@@ -57,28 +67,33 @@ async function main() {
       assert.strictEqual(got.disabled, false, "Got it must unlock after holding");
       click(got);
     }
+    return ids;
   };
 
-  const allIds = evalState("S.players.map(p => p.id)");
-  revealAll(allIds);
+  const voteAll = plan => {
+    for (const id of evalState("S.players.map(p => p.id)")) {
+      assert.strictEqual(evalState("S.votingId"), id, "voter order must follow player order");
+      const selfTile = doc.querySelector('#voteGrid [data-t="' + id + '"]');
+      assert.ok(selfTile && selfTile.disabled, "cannot vote for yourself");
+      click(doc.querySelector('#voteGrid [data-t="' + plan[id] + '"]'));
+      assert.strictEqual(evalState("S.pendingTarget"), plan[id]);
+      assert.ok(doc.querySelector("#voteBox .votedChip"), "voted chip must show before confirm");
+      click(doc.getElementById("vConfirm"));
+    }
+  };
+
+  click(doc.getElementById("startBtn"));
+  assert.strictEqual(evalState("S.phase"), "reveal");
+  const impId = evalState("S.current.imposterId");
+  assert.strictEqual(evalState("S.players.some(p => p.id === S.current.imposterId)"), true);
+
+  let allIds = revealAll();
   assert.strictEqual(evalState("S.players.every(p => p.seen)"), true);
 
   const toVote = doc.getElementById("toVoteBtn");
   assert.strictEqual(toVote.disabled, false);
   click(toVote);
   assert.strictEqual(evalState("S.phase"), "vote");
-
-  const voteAll = plan => {
-    for (const id of allIds) {
-      click(doc.getElementById("vStart"));
-      assert.strictEqual(evalState("S.votingId"), id, "voter order must follow player order");
-      const target = plan[id];
-      click(doc.querySelector('#voteBox [data-t="' + target + '"]'));
-      assert.strictEqual(evalState("S.pendingTarget"), target, "selected target must show before confirm");
-      assert.ok(doc.querySelector("#voteBox .votedChip"), "voted chip must be visible before confirm");
-      click(doc.getElementById("vConfirm"));
-    }
-  };
 
   const others = allIds.filter(id => id !== impId);
   const singleCorrect = others[0];
@@ -101,12 +116,12 @@ async function main() {
   click(doc.getElementById("nextBtn"));
   assert.strictEqual(evalState("S.phase"), "reveal");
   const imp2 = evalState("S.current.imposterId");
-  assert.notStrictEqual(imp2, impId, "imposter should rotate when possible");
-  revealAll(allIds);
+  assert.notStrictEqual(imp2, impId, "imposter rotates through everyone before repeating");
+  revealAll();
 
   click(doc.getElementById("toVoteBtn"));
   const plan2 = {};
-  for (const id of allIds) plan2[id] = (id === imp2) ? allIds.find(x => x !== imp2 && x !== id) : imp2;
+  for (const id of allIds) plan2[id] = (id === imp2) ? allIds.find(x => x !== imp2) : imp2;
   voteAll(plan2);
 
   const scores2 = evalState("JSON.parse(JSON.stringify(S.players))");
@@ -116,7 +131,13 @@ async function main() {
     else assert.strictEqual(p.score, before + 1, "each correct voter gets +1");
   }
 
-  console.log("Smoke test passed: full 2-round game flow through the real UI");
+  window.confirm = () => true;
+  click(doc.getElementById("playAgainBtn"));
+  assert.strictEqual(evalState("S.phase"), "reveal");
+  assert.strictEqual(evalState("S.round"), 1, "play again restarts at round 1");
+  assert.ok(evalState("S.players.every(p => p.score === 0)"), "play again resets scores");
+
+  console.log("Smoke test passed: themes, color pickers, full 2-round game, play again");
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

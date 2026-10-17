@@ -6,12 +6,12 @@ Play it here: **https://shaurya48sgo.github.io/imposter_name_game/** (GitHub Pag
 
 ## How to play
 
-1. Add 3–12 players and let each pick a name and color.
+1. Add 3–12 players and let each pick a name and color — presets, or any custom color. Tap a player's circle any time to recolor them.
 2. Pick a word category and how close the imposter's hint should be, then start the round.
 3. Pass the phone around. Each player taps their own colored box, presses and holds the circle to peek at their note, and hits **Got it**. Seen boxes turn into colored outlines.
 4. Once everyone has seen their note, tap **Continue**.
-5. Pass the phone again: each player votes for who they think is the imposter. They see their choice and confirm it before the phone moves on.
-6. Results reveal the imposter, the word, everyone's votes, and the points. Then start the next round.
+5. Voting: all players are shown at once, like the word grid. The phone is passed to whoever's turn it is (shown at the top), they tap the player they suspect, review "X voted: Y" and confirm. You cannot vote for yourself.
+6. Results reveal the imposter, the word, everyone's votes, and the points. **Next Round** keeps scores, **Play Again** restarts with the same players and reset scores.
 
 Playing in person? Discuss out loud between reveal and voting. Playing remotely? Hop in a call while using the same link.
 
@@ -32,9 +32,20 @@ Edge cases, decided for fairness (easy to change in `logic.js`):
 
 ## Hint closeness (configurable each round)
 
-- **Close** — a very similar thing ("Lasagna" for *Pizza*)
-- **Medium** — describes it ("Cheesy Italian flatbread")
-- **Vague** — barely a clue ("Something you eat")
+Hints are deliberately cryptic — never a direct description:
+
+- **Close** — a strong association ("Comes in a box" for *Pizza*)
+- **Medium** — context only ("Friday night order")
+- **Vague** — a single cryptic fragment ("Slices")
+
+The imposter is picked with a shuffle bag: everyone gets a turn before anyone repeats, and never purely by seat order.
+
+## Themes & fonts
+
+Top of the page has quick switches, saved to your browser:
+
+- **Themes:** Blood (default red/black), Neon, Toxic, Abyss, Ember
+- **Fonts:** Sans, Rounded, Serif, Mono, Display
 
 ## Run it locally
 
@@ -63,7 +74,7 @@ To run the smoke test, install jsdom first: `npm i -D jsdom`.
 | File | Purpose |
 |---|---|
 | `index.html` | Screens for setup, reveal, voting, results |
-| `style.css` | Dark neon party theme |
+| `style.css` | Theme system (5 themes, 5 fonts) + all screens |
 | `words.js` | Word bank: 60 words x 5 categories, 3 hint levels each |
 | `logic.js` | Pure rule functions (word picking, scoring) |
 | `game.js` | UI, state machine, localStorage persistence |
@@ -78,8 +89,8 @@ To run the smoke test, install jsdom first: `npm i -D jsdom`.
 
 ## Adding words
 
-Add entries to `words.js` — every word needs three hints:
+Add entries to `words.js` — every word needs three hints, kept cryptic on purpose:
 
 ```js
-{ w: "Pizza", close: "Lasagna", medium: "Cheesy Italian flatbread", vague: "Something you eat" }
+{ w: "Pizza", close: "Comes in a box", medium: "Friday night order", vague: "Slices" }
 ```

@@ -1,18 +1,21 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="blood" data-font="sans">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0a14">
+<meta name="theme-color" content="#0b0203">
 <title>Who is the Imposter?</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%230a0a14' stroke='%23e879f9' stroke-width='7'/%3E%3Ctext x='50' y='70' font-size='58' text-anchor='middle' fill='%2322d3ee' font-family='system-ui' font-weight='900'%3E%3F%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%230b0203' stroke='%23ff3b52' stroke-width='7'/%3E%3Ctext x='50' y='70' font-size='58' text-anchor='middle' fill='%23ff3b52' font-family='system-ui' font-weight='900'%3E%3F%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<canvas id="fx"></canvas>
 <div id="toast"></div>
 
 <header>
+  <div id="topbar">
+    <div class="tbRow" id="themeRow"></div>
+    <div class="tbRow" id="fontRow"></div>
+  </div>
   <h1>WHO IS THE IMPOSTER?</h1>
   <div id="roundBadge" class="hidden"></div>
 </header>
@@ -28,6 +31,10 @@
       </div>
       <div class="lbl">Pick a color</div>
       <div id="swatches" class="swatches"></div>
+      <div class="customRow">
+        <input type="color" id="customColor" value="#ff3b52">
+        <span class="muted small">or pick any custom color &middot; tap a player's circle to recolor them</span>
+      </div>
     </div>
     <div class="card">
       <div class="cardTop"><h2>Round settings</h2></div>
@@ -35,7 +42,7 @@
       <div id="catRow" class="chips"></div>
       <div class="lbl">Imposter's hint</div>
       <div id="closenessRow" class="chips"></div>
-      <div class="muted small" style="margin-top:10px">Close = a very similar thing &middot; Medium = describes it &middot; Vague = barely a clue</div>
+      <div class="muted small" style="margin-top:10px">Close = a strong association &middot; Medium = context clue &middot; Vague = a single cryptic word</div>
     </div>
     <button id="startBtn" class="btn big full" disabled>START ROUND</button>
     <div id="startNote" class="muted small center">Add at least 3 players to start</div>
@@ -55,7 +62,8 @@
   <section id="screen-vote" class="screen hidden">
     <div class="phaseHead">
       <h2>Who is the imposter?</h2>
-      <div id="voteProgress" class="muted"></div>
+      <div id="voteTurn" class="voteTurn"></div>
+      <div id="voteProgress" class="muted small"></div>
     </div>
     <div id="voteBox"></div>
   </section>
@@ -63,6 +71,7 @@
   <section id="screen-results" class="screen hidden">
     <div id="resultsBox"></div>
     <button id="nextBtn" class="btn big full">NEXT ROUND</button>
+    <button id="playAgainBtn" class="btn full">PLAY AGAIN (SAME PLAYERS, RESET SCORES)</button>
     <button id="setupBtn" class="btn ghost full">Change settings (keep scores)</button>
   </section>
 </main>

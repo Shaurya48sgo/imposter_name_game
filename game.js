@@ -1,10 +1,27 @@
 const LS_KEY = "imposter_name_game_v1";
+const UI_KEY = "imposter_ui_v1";
 const COLORS = ["#22d3ee", "#e879f9", "#a3e635", "#fb7185", "#fbbf24", "#8b5cf6", "#34d399", "#f97316", "#60a5fa", "#f472b6", "#4ade80", "#facc15"];
 const CATS = ["All", "Food", "Animals", "Places", "Objects", "Sports"];
 const CLOSENESS = [["close", "Close"], ["medium", "Medium"], ["vague", "Vague"]];
 const MIN_PLAYERS = 3, MAX_PLAYERS = 12;
+const THEMES = [
+  ["blood", "Blood", "#ff3b52", "#0b0203"],
+  ["neon", "Neon", "#22d3ee", "#0a0a14"],
+  ["toxic", "Toxic", "#39ff14", "#050a04"],
+  ["abyss", "Abyss", "#4f7cff", "#03060f"],
+  ["ember", "Ember", "#ff8c1a", "#0c0502"]
+];
+const FONTS = [
+  ["sans", "Sans", "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"],
+  ["rounded", "Rounded", "ui-rounded,'Varela Round','Nunito','Trebuchet MS',system-ui,sans-serif"],
+  ["serif", "Serif", "Georgia,'Times New Roman',serif"],
+  ["mono", "Mono", "ui-monospace,'Cascadia Mono','Roboto Mono',Consolas,monospace"],
+  ["display", "Display", "Impact,'Arial Black','Franklin Gothic Medium',sans-serif"]
+];
 
-let S = null, pickColor = COLORS[0], heldOnce = false, audioCtx = null, toastT = null;
+let S = null;
+let UI = { theme: "blood", font: "sans" };
+let pickColor = COLORS[0], heldOnce = false, audioCtx = null, toastT = null;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -12,16 +29,12 @@ const byId = id => S.players.find(p => p.id === id);
 const darkText = hex => luminance(hex) > 0.55;
 const ink = hex => darkText(hex) ? "#08131c" : "#f4f7ff";
 
-const fx = document.getElementById("fx");
-const fctx = fx.getContext ? fx.getContext("2d") : null;
-let parts = [], raf = null;
-
 function newState() {
   return {
     v: 1, phase: "setup", players: [], round: 0,
     settings: { category: "All", closeness: "medium" },
     current: null, openId: null, revealStep: "handoff",
-    voteStep: "handoff", votingId: null, pendingTarget: null, lastResult: null
+    votingId: null, pendingTarget: null, lastResult: null, bag: []
   };
 }
 
@@ -36,6 +49,43 @@ function loadState() {
     const s = JSON.parse(raw);
     return s && s.v === 1 ? s : null;
   } catch (e) { return null; }
+}
+
+function loadUI() {
+  try {
+    const raw = localStorage.getItem(UI_KEY);
+    if (!raw) return;
+    const u = JSON.parse(raw);
+    if (THEMES.some(t => t[0] === u.theme)) UI.theme = u.theme;
+    if (FONTS.some(f => f[0] === u.font)) UI.font = u.font;
+  } catch (e) {}
+}
+
+function saveUI() {
+  try { localStorage.setItem(UI_KEY, JSON.stringify(UI)); } catch (e) {}
+}
+
+function applyUI() {
+  document.documentElement.dataset.theme = UI.theme;
+  document.documentElement.dataset.font = UI.font;
+  const t = THEMES.find(t => t[0] === UI.theme);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta && t) meta.content = t[3];
+  renderTopbar();
+  saveUI();
+}
+
+function renderTopbar() {
+  const tr = $("themeRow");
+  tr.innerHTML = THEMES.map(([id, label, c]) =>
+    `<button class="tdot${UI.theme === id ? " on" : ""}" data-theme="${id}" title="${label}" style="background:${c};color:${c}"></button>`
+  ).join("");
+  tr.querySelectorAll("[data-theme]").forEach(b => b.onclick = () => { UI.theme = b.dataset.theme; applyUI(); });
+  const fr = $("fontRow");
+  fr.innerHTML = FONTS.map(([id, label, stack]) =>
+    `<button class="fchip${UI.font === id ? " on" : ""}" data-font="${id}" style="font-family:${stack}">${label}</button>`
+  ).join("");
+  fr.querySelectorAll("[data-font]").forEach(b => b.onclick = () => { UI.font = b.dataset.font; applyUI(); });
 }
 
 function tone(f, d) {
@@ -59,49 +109,29 @@ function toast(m) {
   toastT = setTimeout(() => t.classList.remove("show"), 1900);
 }
 
-function resizeFx() {
-  if (!fctx) return;
-  const dpr = window.devicePixelRatio || 1;
-  fx.width = innerWidth * dpr;
-  fx.height = innerHeight * dpr;
-  fctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
-
-function burst(n) {
-  if (!fctx) return;
-  resizeFx();
-  for (let i = 0; i < n; i++) {
-    parts.push({
-      x: innerWidth / 2, y: innerHeight * 0.32,
-      vx: (Math.random() - 0.5) * 11, vy: Math.random() * -10 - 2, g: 0.36,
-      rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 0.35,
-      c: COLORS[i % COLORS.length], s: 6 + Math.random() * 7,
-      life: 100 + Math.random() * 50
-    });
-  }
-  if (!raf) raf = requestAnimationFrame(fxLoop);
-}
-
-function fxLoop() {
-  fctx.clearRect(0, 0, innerWidth, innerHeight);
-  parts = parts.filter(p => p.life-- > 0);
-  for (const p of parts) {
-    p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
-    fctx.save();
-    fctx.translate(p.x, p.y);
-    fctx.rotate(p.rot);
-    fctx.globalAlpha = Math.min(1, p.life / 40);
-    fctx.fillStyle = p.c;
-    fctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.6);
-    fctx.restore();
-  }
-  if (parts.length) raf = requestAnimationFrame(fxLoop);
-  else { raf = null; fctx.clearRect(0, 0, innerWidth, innerHeight); }
-}
-
-addEventListener("resize", () => { if (fx.width) resizeFx(); });
 addEventListener("visibilitychange", () => { if (S) save(); });
 addEventListener("pagehide", () => { if (S) save(); });
+
+function shuffled(a) {
+  const r = [...a];
+  for (let i = r.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [r[i], r[j]] = [r[j], r[i]];
+  }
+  return r;
+}
+
+function drawImposter() {
+  S.bag = (S.bag || []).filter(id => S.players.some(p => p.id === id));
+  if (!S.bag.length) {
+    S.bag = shuffled(S.players.map(p => p.id));
+    if (S.current && S.bag.length > 1 && S.bag[S.bag.length - 1] === S.current.imposterId) {
+      const j = S.bag.findIndex(id => id !== S.current.imposterId);
+      [S.bag[j], S.bag[S.bag.length - 1]] = [S.bag[S.bag.length - 1], S.bag[j]];
+    }
+  }
+  return S.bag.pop();
+}
 
 function render() {
   if (!S) return;
@@ -123,7 +153,8 @@ function renderSetup() {
   $("startNote").classList.toggle("hidden", S.players.length >= MIN_PLAYERS);
   const list = $("playerList");
   list.innerHTML = S.players.map(p =>
-    `<div class="prow"><span class="dot" style="background:${p.color}"></span><b>${esc(p.name)}</b>` +
+    `<div class="prow"><input type="color" class="pdot" data-cid="${p.id}" value="${p.color}" title="Change color">` +
+    `<b>${esc(p.name)}</b>` +
     (p.score ? `<span class="miniScore">${p.score} pts</span>` : "") +
     `<button class="xbtn" data-del="${p.id}">&#10005;</button></div>`
   ).join("") || `<div class="muted small">No players yet.</div>`;
@@ -131,9 +162,16 @@ function renderSetup() {
     S.players = S.players.filter(p => p.id !== b.dataset.del);
     render();
   });
+  list.querySelectorAll("[data-cid]").forEach(inp => inp.onchange = () => {
+    const p = byId(inp.dataset.cid);
+    if (p) { p.color = inp.value; save(); }
+  });
   const sw = $("swatches");
   sw.innerHTML = COLORS.map(c => `<button class="sw${c === pickColor ? " sel" : ""}" data-c="${c}" style="background:${c};color:${c}"></button>`).join("");
   sw.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { pickColor = b.dataset.c; render(); });
+  const custom = $("customColor");
+  custom.value = /^#[0-9a-fA-F]{6}$/.test(pickColor) ? pickColor : COLORS[0];
+  custom.classList.toggle("sel", !COLORS.includes(pickColor));
   const cat = $("catRow");
   cat.innerHTML = CATS.map(c => `<button class="chip${S.settings.category === c ? " on" : ""}" data-cat="${c}">${c}</button>`).join("");
   cat.querySelectorAll("[data-cat]").forEach(b => b.onclick = () => { S.settings.category = b.dataset.cat; render(); });
@@ -158,15 +196,12 @@ function addPlayer() {
 function startRound() {
   if (S.players.length < MIN_PLAYERS) return toast("Need at least " + MIN_PLAYERS + " players");
   const entry = pickWord(S.settings.category);
-  let imp = S.players[Math.floor(Math.random() * S.players.length)];
-  if (S.round > 0 && S.current && S.players.length > 2 && imp.id === S.current.imposterId) {
-    imp = S.players[(S.players.indexOf(imp) + 1) % S.players.length];
-  }
-  S.current = { word: entry.w, hint: entry[S.settings.closeness], imposterId: imp.id, category: entry.cat };
+  const impId = drawImposter();
+  S.current = { word: entry.w, hint: entry[S.settings.closeness], imposterId: impId, category: entry.cat };
   S.players.forEach(p => { p.seen = false; p.vote = null; });
   S.round++;
   S.phase = "reveal"; S.openId = null; S.revealStep = "handoff";
-  S.voteStep = "handoff"; S.votingId = null; S.pendingTarget = null; S.lastResult = null;
+  S.votingId = null; S.pendingTarget = null; S.lastResult = null;
   heldOnce = false;
   render();
 }
@@ -262,47 +297,35 @@ function renderVote() {
   const voter = S.players.find(p => p.vote === null);
   if (!voter) { finishVoting(); return; }
   S.votingId = voter.id;
+  $("voteTurn").innerHTML = "Pass the phone to <b style=\"color:" + voter.color + "\">" + esc(voter.name) + "</b>";
   $("voteProgress").textContent = voted + " / " + S.players.length + " votes cast";
-  const box = $("voteBox");
-  if (S.voteStep === "handoff") {
-    box.innerHTML =
-      `<div class="ovCard inline">
-        <div class="ovPass">Pass the phone to</div>
-        <div class="ovName" style="color:${voter.color}">${esc(voter.name)}</div>
-        <button class="btn big full" id="vStart">I'M ${esc(voter.name.toUpperCase())} &mdash; VOTE NOW</button>
-      </div>`;
-    $("vStart").onclick = () => { S.voteStep = "choose"; render(); };
-  } else if (S.voteStep === "choose") {
-    box.innerHTML =
-      `<div class="ovCard inline">
-        <div class="q">${esc(voter.name)}, who is the IMPOSTER?</div>
-        <div class="pGrid small">${S.players.filter(p => p.id !== voter.id).map(p =>
-          `<button class="ptile unseen" data-t="${p.id}" style="--pc:${p.color};color:${ink(p.color)}">` +
-          `<span class="ptName">${esc(p.name)}</span></button>`).join("")}</div>
-      </div>`;
-    box.querySelectorAll("[data-t]").forEach(b => b.onclick = () => {
-      S.pendingTarget = b.dataset.t;
-      S.voteStep = "confirm";
-      render();
-    });
-  } else {
-    const t = byId(S.pendingTarget);
-    if (!t) { S.voteStep = "choose"; render(); return; }
-    box.innerHTML =
-      `<div class="ovCard inline">
-        <div class="q">${esc(voter.name)}, you voted:</div>
-        <div class="votedChip" style="--pc:${t.color}"><span class="dot" style="background:${t.color}"></span><b>${esc(t.name)}</b></div>
-        <button class="btn big full" id="vConfirm">CONFIRM VOTE</button>
-        <button class="btn ghost full" id="vChange">Change</button>
-      </div>`;
+  const target = S.pendingTarget ? byId(S.pendingTarget) : null;
+  $("voteBox").innerHTML =
+    `<div class="pGrid small" id="voteGrid">` + S.players.map(p => {
+      const isSelf = p.id === voter.id;
+      const sel = S.pendingTarget === p.id;
+      return `<button class="ptile ${sel ? "voted" : "unseen"}" data-t="${p.id}" ${isSelf ? "disabled" : ""} style="--pc:${p.color};color:${ink(p.color)}">` +
+        `<span class="ptName">${esc(p.name)}</span>` +
+        `<span class="ptSub">${isSelf ? "YOU" : "TAP TO VOTE"}</span></button>`;
+    }).join("") + `</div>` +
+    `<div class="votedBar">` + (target
+      ? `<div class="votedChip" style="--pc:${target.color}"><span class="dot" style="background:${target.color}"></span>` +
+        `<span class="muted small">${esc(voter.name)} voted:</span><b>${esc(target.name)}</b></div>` +
+        `<button class="btn big full" id="vConfirm">CONFIRM VOTE</button>` +
+        `<button class="btn ghost full" id="vChange">Change</button>`
+      : `<div class="muted small">Tap the player you suspect, then confirm.</div>`) + `</div>`;
+  $("voteGrid").querySelectorAll("[data-t]").forEach(b => b.onclick = () => {
+    S.pendingTarget = b.dataset.t;
+    render();
+  });
+  if (target) {
     $("vConfirm").onclick = () => {
-      voter.vote = S.pendingTarget;
+      voter.vote = target.id;
       S.pendingTarget = null;
-      S.voteStep = "handoff";
       tone(440, 0.06);
       render();
     };
-    $("vChange").onclick = () => { S.pendingTarget = null; S.voteStep = "choose"; render(); };
+    $("vChange").onclick = () => { S.pendingTarget = null; render(); };
   }
 }
 
@@ -317,10 +340,9 @@ function finishVoting() {
     majorityCorrect: r.majorityCorrect, correctCount: r.correctCount, total: r.total
   };
   S.phase = "results";
-  S.voteStep = "handoff"; S.votingId = null; S.pendingTarget = null;
+  S.votingId = null; S.pendingTarget = null;
   tone(r.majorityCorrect ? 620 : 180, 0.2);
   render();
-  burst(90);
 }
 
 function renderResults() {
@@ -351,6 +373,12 @@ function renderResults() {
       `<span class="dot" style="background:${p.color}"></span><b>${esc(p.name)}</b>` +
       `<span class="spacer"></span><b class="score">${p.score}</b></div>`).join("")}</div>`;
   $("nextBtn").onclick = () => startRound();
+  $("playAgainBtn").onclick = () => {
+    if (!confirm("Play again? Scores reset, same players.")) return;
+    S.round = 0; S.bag = [];
+    S.players.forEach(p => { p.score = 0; });
+    startRound();
+  };
   $("setupBtn").onclick = () => {
     S.phase = "setup";
     S.players.forEach(p => { p.seen = false; p.vote = null; });
@@ -360,21 +388,22 @@ function renderResults() {
 }
 
 function init() {
+  loadUI();
+  applyUI();
   S = loadState() || newState();
   if (S.openId) { S.openId = null; S.revealStep = "handoff"; }
-  if (S.votingId) { S.voteStep = "handoff"; S.pendingTarget = null; }
   heldOnce = false;
   pickColor = COLORS.find(c => !S.players.some(p => p.color === c)) || COLORS[0];
   render();
-  if (S.phase === "results" && S.lastResult) burst(70);
 }
 
 $("addBtn").onclick = addPlayer;
 $("pname").addEventListener("keydown", e => { if (e.key === "Enter") addPlayer(); });
 $("startBtn").onclick = startRound;
+$("customColor").oninput = () => { pickColor = $("customColor").value; render(); };
 $("toVoteBtn").onclick = () => {
   if (S.players.some(p => !p.seen)) return toast("Everyone must see their note first");
-  S.phase = "vote"; S.voteStep = "handoff"; S.pendingTarget = null;
+  S.phase = "vote"; S.pendingTarget = null;
   render();
 };
 $("newGameBtn").onclick = () => {
