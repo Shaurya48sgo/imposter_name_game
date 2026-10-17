@@ -50,7 +50,7 @@ const FONTS = [
   ["moonstar", "Moonstar", "'Moonstar',Georgia,serif"]
 ];
 
-window.APP_V = 4;
+window.APP_V = 5;
 
 let S = null;
 let UI = { theme: "blood", font: "sans" };

@@ -196,16 +196,20 @@ body{
 .confirmBtns{display:flex;gap:10px}
 .confirmBtns .btn{flex:1;padding:12px;border-radius:12px}
 header{max-width:760px;margin:0 auto;padding:10px 0 6px;text-align:center;position:relative}
+.topActions{
+  position:relative;z-index:5;display:flex;justify-content:center;align-items:center;
+  gap:10px;padding:8px 0 2px;flex-wrap:wrap;
+}
 .resetBtn{
-  position:absolute;top:8px;right:0;padding:7px 13px;border-radius:999px;font:inherit;
-  font-size:.72rem;font-weight:800;letter-spacing:.12em;cursor:pointer;
+  padding:9px 16px;border-radius:999px;font:inherit;touch-action:manipulation;
+  font-size:.78rem;font-weight:800;letter-spacing:.12em;cursor:pointer;
   border:1px solid color-mix(in srgb,var(--red) 45%,transparent);
   background:color-mix(in srgb,var(--red) 12%,transparent);color:var(--red);
 }
 .resetBtn:active{transform:scale(.95)}
 .themeOpenBtn{
-  position:absolute;top:8px;left:0;padding:7px 13px;border-radius:999px;font:inherit;
-  font-size:.72rem;font-weight:800;letter-spacing:.12em;cursor:pointer;
+  padding:9px 16px;border-radius:999px;font:inherit;touch-action:manipulation;
+  font-size:.78rem;font-weight:800;letter-spacing:.12em;cursor:pointer;
   border:1px solid color-mix(in srgb,var(--cyan) 45%,transparent);
   background:color-mix(in srgb,var(--cyan) 12%,transparent);color:var(--cyan);
 }

@@ -6,10 +6,10 @@
 <meta name="theme-color" content="#0b0203">
 <title>Who is the Imposter?</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%230b0203' stroke='%23ff3b52' stroke-width='7'/%3E%3Ctext x='50' y='70' font-size='58' text-anchor='middle' fill='%23ff3b52' font-family='system-ui' font-weight='900'%3E%3F%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 <script>
 (function () {
-  var v = 4;
+  var v = 5;
   window.__APP_V = v;
   function busted() { try { return sessionStorage.getItem("imposterBust"); } catch (e) { return "1"; } }
   function markBusted() { try { sessionStorage.setItem("imposterBust", "1"); } catch (e) {} }
@@ -34,11 +34,13 @@
 <div id="toast"></div>
 
 <header>
-  <button id="themeBtn" class="themeOpenBtn" title="Themes &amp; fonts">&#9998; THEME</button>
+  <div class="topActions">
+    <button id="themeBtn" class="themeOpenBtn" title="Themes &amp; fonts">&#9998; THEME</button>
+    <button id="resetBtn" class="resetBtn" title="Reset game with same players">&#8635; RESET</button>
+  </div>
   <h1>WHO IS THE IMPOSTER?</h1>
   <div id="uiBadge" class="uiBadge"></div>
   <div id="roundBadge" class="hidden"></div>
-  <button id="resetBtn" class="resetBtn" title="Reset game with same players">&#8635; RESET</button>
 </header>
 
 <div id="themeScrim" class="hidden"></div>
@@ -121,8 +123,8 @@
   </div>
 </div>
 
-<script src="words.js?v=4"></script>
-<script src="logic.js?v=4"></script>
-<script src="game.js?v=4"></script>
+<script src="words.js?v=5"></script>
+<script src="logic.js?v=5"></script>
+<script src="game.js?v=5"></script>
 </body>
 </html>
