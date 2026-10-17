@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a14">
+<title>Who is the Imposter?</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%230a0a14' stroke='%23e879f9' stroke-width='7'/%3E%3Ctext x='50' y='70' font-size='58' text-anchor='middle' fill='%2322d3ee' font-family='system-ui' font-weight='900'%3E%3F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div id="toast"></div>
+
+<header>
+  <h1>WHO IS THE IMPOSTER?</h1>
+  <div id="roundBadge" class="hidden"></div>
+</header>
+
+<main>
+  <section id="screen-setup" class="screen">
+    <div class="card">
+      <div class="cardTop"><h2>Players</h2><span class="tag" id="pcount">0/12</span></div>
+      <div id="playerList"></div>
+      <div class="addRow">
+        <input id="pname" maxlength="12" placeholder="Player name" autocomplete="off">
+        <button id="addBtn" class="btn">+ ADD</button>
+      </div>
+      <div class="lbl">Pick a color</div>
+      <div id="swatches" class="swatches"></div>
+    </div>
+    <div class="card">
+      <div class="cardTop"><h2>Round settings</h2></div>
+      <div class="lbl">Word category</div>
+      <div id="catRow" class="chips"></div>
+      <div class="lbl">Imposter's hint</div>
+      <div id="closenessRow" class="chips"></div>
+      <div class="muted small" style="margin-top:10px">Close = a very similar thing &middot; Medium = describes it &middot; Vague = barely a clue</div>
+    </div>
+    <button id="startBtn" class="btn big full" disabled>START ROUND</button>
+    <div id="startNote" class="muted small center">Add at least 3 players to start</div>
+    <button id="newGameBtn" class="btn ghost full">New game (clear players &amp; scores)</button>
+  </section>
+
+  <section id="screen-reveal" class="screen hidden">
+    <div class="phaseHead">
+      <h2>Secret notes</h2>
+      <div class="muted small">One by one: tap your name, press &amp; hold to peek, then GOT IT.</div>
+    </div>
+    <div id="revealGrid" class="pGrid"></div>
+    <div id="seenProgress" class="muted center"></div>
+    <button id="toVoteBtn" class="btn big full" disabled></button>
+  </section>
+
+  <section id="screen-vote" class="screen hidden">
+    <div class="phaseHead">
+      <h2>Who is the imposter?</h2>
+      <div id="voteProgress" class="muted"></div>
+    </div>
+    <div id="voteBox"></div>
+  </section>
+
+  <section id="screen-results" class="screen hidden">
+    <div id="resultsBox"></div>
+    <button id="nextBtn" class="btn big full">NEXT ROUND</button>
+    <button id="setupBtn" class="btn ghost full">Change settings (keep scores)</button>
+  </section>
+</main>
+
+<footer>
+  <button id="abandonBtn" class="linkBtn hidden">Abandon this round</button>
+</footer>
+
+<div id="overlay" class="hidden"></div>
+
+<script src="words.js"></script>
+<script src="logic.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
