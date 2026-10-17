@@ -50,11 +50,14 @@ const FONTS = [
   ["moonstar", "Moonstar", "'Moonstar',Georgia,serif"]
 ];
 
+window.APP_V = 4;
+
 let S = null;
 let UI = { theme: "blood", font: "sans" };
 let pickColor = COLORS[0], heldOnce = false, audioCtx = null, toastT = null;
 
 const $ = id => document.getElementById(id);
+const bind = (id, prop, fn) => { const el = $(id); if (el) el[prop] = fn; };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const byId = id => S.players.find(p => p.id === id);
 const darkText = hex => luminance(hex) > 0.55;
@@ -62,7 +65,7 @@ const ink = hex => darkText(hex) ? "#08131c" : "#f4f7ff";
 
 function newState() {
   return {
-    v: 1, phase: "setup", players: [], round: 0,
+    v: 2, phase: "setup", players: [], round: 0,
     settings: { category: "All", closeness: "medium" },
     current: null, openId: null, revealStep: "handoff",
     voteSelectId: null, lastResult: null
@@ -78,7 +81,22 @@ function loadState() {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return null;
     const s = JSON.parse(raw);
-    return s && s.v === 1 ? s : null;
+    if (!s || (s.v !== 1 && s.v !== 2) || !Array.isArray(s.players)) return null;
+    const VALID = ["setup", "reveal", "vote", "results"];
+    if (!VALID.includes(s.phase)) s.phase = "setup";
+    if (!s.settings || !s.settings.category) s.settings = { category: "All", closeness: "medium" };
+    if (!s.current) s.phase = "setup";
+    if (s.phase === "setup") { s.current = null; s.lastResult = null; }
+    s.players.forEach(p => {
+      if (!p.color) p.color = "#ff3b52";
+      if (typeof p.score !== "number") p.score = 0;
+      p.seen = !!p.seen;
+      if (p.vote === undefined) p.vote = null;
+      delete p.color2;
+    });
+    s.voteSelectId = null;
+    s.v = 2;
+    return s;
   } catch (e) { return null; }
 }
 
@@ -113,9 +131,15 @@ function renderTopbar() {
     `<span class="tdot" style="background:${c};color:${c};border-color:${bg}"></span>${label}</button>`
   ).join("");
   tr.querySelectorAll("[data-theme]").forEach(b => b.onclick = () => { UI.theme = b.dataset.theme; applyUI(); });
-  const tLabel = (THEMES.find(t => t[0] === UI.theme) || THEMES[0])[1];
+  const tEntry = THEMES.find(t => t[0] === UI.theme) || THEMES[0];
+  const tLabel = tEntry[1];
   const fLabel = (FONTS.find(f => f[0] === UI.font) || FONTS[0])[1];
-  $("uiLabel").textContent = tLabel + " theme \u00b7 " + fLabel + " font";
+  const uiLabel = $("uiLabel");
+  if (uiLabel) uiLabel.textContent = tLabel + " theme \u00b7 " + fLabel + " font";
+  const badge = $("uiBadge");
+  if (badge) badge.innerHTML =
+    `<span class="tbTheme" style="color:${tEntry[2]}">&#9679; ${tLabel}</span>` +
+    `<span class="tbSep">&middot;</span><span class="tbFont">${fLabel} font</span>`;
   const fr = $("fontRow");
   fr.innerHTML = FONTS.map(([id, label, stack]) =>
     `<button class="fchip${UI.font === id ? " on" : ""}" data-font="${id}" style="font-family:${stack}">${label}</button>`
@@ -455,32 +479,33 @@ function closeConfirm() {
   $("confirmModal").classList.add("hidden");
 }
 
-$("confirmYes").onclick = () => {
-  const cb = confirmCb;
-  closeConfirm();
-  if (cb) cb();
-};
-$("confirmNo").onclick = closeConfirm;
-
 function init() {
-  loadUI();
-  applyUI();
-  S = loadState() || newState();
-  if (S.openId) { S.openId = null; S.revealStep = "handoff"; }
-  heldOnce = false;
-  pickColor = COLORS.find(c => !S.players.some(p => p.color === c)) || COLORS[0];
-  render();
+  try {
+    loadUI();
+    applyUI();
+    S = loadState() || newState();
+    if (S.openId) { S.openId = null; S.revealStep = "handoff"; }
+    heldOnce = false;
+    pickColor = COLORS.find(c => !S.players.some(p => p.color === c)) || COLORS[0];
+    render();
+  } catch (err) {
+    if (window.console && console.error) console.error("init failed, resetting state", err);
+    try { localStorage.removeItem(LS_KEY); } catch (e) {}
+    S = newState();
+    pickColor = COLORS[0];
+    try { render(); } catch (e) {}
+  }
 }
 
-$("addBtn").onclick = addPlayer;
-$("pname").addEventListener("keydown", e => { if (e.key === "Enter") addPlayer(); });
-$("startBtn").onclick = startRound;
-$("customColor").oninput = () => { pickColor = $("customColor").value; render(); };
-$("themeBtn").onclick = () => { $("themePanel").classList.remove("hidden"); $("themeScrim").classList.remove("hidden"); };
+bind("addBtn", "onclick", addPlayer);
+bind("pname", "onkeydown", e => { if (e.key === "Enter") addPlayer(); });
+bind("startBtn", "onclick", startRound);
+bind("customColor", "oninput", () => { pickColor = $("customColor").value; render(); });
+bind("themeBtn", "onclick", () => { $("themePanel").classList.remove("hidden"); $("themeScrim").classList.remove("hidden"); });
 const closeThemePanel = () => { $("themePanel").classList.add("hidden"); $("themeScrim").classList.add("hidden"); };
-$("panelClose").onclick = closeThemePanel;
-$("themeScrim").onclick = closeThemePanel;
-$("resetBtn").onclick = () => {
+bind("panelClose", "onclick", closeThemePanel);
+bind("themeScrim", "onclick", closeThemePanel);
+bind("resetBtn", "onclick", () => {
   if (S.players.length < MIN_PLAYERS) return toast("Need at least " + MIN_PLAYERS + " players");
   askConfirm("Reset the game? Same players, scores back to 0, brand new round.", () => {
     S.round = 0;
@@ -488,27 +513,33 @@ $("resetBtn").onclick = () => {
     startRound();
     toast("Game reset \u2014 scores cleared, round 1");
   });
-};
-$("toVoteBtn").onclick = () => {
+});
+bind("toVoteBtn", "onclick", () => {
   if (S.players.some(p => !p.seen)) return toast("Everyone must see their note first");
   S.phase = "vote"; S.voteSelectId = null;
   render();
-};
-$("newGameBtn").onclick = () => {
+});
+bind("newGameBtn", "onclick", () => {
   askConfirm("Clear all players and scores?", () => {
     S = newState();
     pickColor = COLORS[0];
     render();
   });
-};
-$("abandonBtn").onclick = () => {
+});
+bind("abandonBtn", "onclick", () => {
   askConfirm("Abandon this round? Finished rounds keep their scores.", () => {
-    if (S.phase === "reveal" || S.phase === "vote" || S.phase === "finalize") S.round--;
+    if (S.phase === "reveal" || S.phase === "vote") S.round--;
     S.phase = "setup"; S.current = null; S.lastResult = null;
     S.openId = null; S.voteSelectId = null;
     S.players.forEach(p => { p.seen = false; p.vote = null; });
     render();
   });
-};
+});
+bind("confirmYes", "onclick", () => {
+  const cb = confirmCb;
+  closeConfirm();
+  if (cb) cb();
+});
+bind("confirmNo", "onclick", closeConfirm);
 
 init();

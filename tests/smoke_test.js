@@ -41,9 +41,11 @@ async function main() {
   assert.ok(doc.getElementById("uiLabel").textContent.includes("Blood"), "active theme is labelled");
   click(doc.querySelector('#fontRow [data-font="zombie"]'));
   assert.strictEqual(doc.documentElement.dataset.font, "zombie", "dafont font applies");
+  assert.ok(doc.getElementById("uiBadge").textContent.includes("Zombie"), "top badge shows the font");
   click(doc.querySelector('#fontRow [data-font="sans"]'));
   click(doc.getElementById("panelClose"));
   assert.strictEqual(doc.getElementById("themePanel").classList.contains("hidden"), true, "panel closes");
+  assert.ok(doc.getElementById("uiBadge").textContent.includes("Blood"), "top badge shows the theme");
 
   const custom = doc.getElementById("customColor");
   custom.value = "#123456";

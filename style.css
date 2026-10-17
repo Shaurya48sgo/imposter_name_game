@@ -245,6 +245,14 @@ h3{margin:0 0 8px;font-size:.85rem;letter-spacing:.18em;text-transform:uppercase
 .fchip{padding:5px 12px;border-radius:999px;font-size:.8rem;font-weight:700;
   border:1px solid var(--line);background:transparent;color:var(--dim);cursor:pointer}
 .fchip.on{background:var(--grad);color:#fff;border-color:transparent}
+.uiBadge{
+  display:inline-flex;align-items:center;gap:9px;margin-top:10px;padding:5px 14px;border-radius:999px;
+  font-size:.8rem;font-weight:800;letter-spacing:.06em;
+  border:1px solid var(--line);background:color-mix(in srgb,var(--text) 5%,transparent);
+}
+.uiBadge .tbTheme{text-shadow:0 0 12px currentColor}
+.uiBadge .tbSep{color:var(--dim)}
+.uiBadge .tbFont{color:var(--dim);font-weight:700}
 #roundBadge{
   display:inline-block;margin-top:10px;padding:5px 14px;border-radius:999px;font-size:.8rem;
   font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);
