@@ -12,15 +12,20 @@
 <div id="toast"></div>
 
 <header>
-  <div id="topbar">
-    <div class="tbRow" id="themeRow"></div>
-    <div class="tbRow" id="fontRow"></div>
-    <div id="uiLabel" class="muted small"></div>
-  </div>
+  <button id="themeBtn" class="themeOpenBtn" title="Themes &amp; fonts">&#9998; THEME</button>
   <h1>WHO IS THE IMPOSTER?</h1>
   <div id="roundBadge" class="hidden"></div>
   <button id="resetBtn" class="resetBtn" title="Reset game with same players">&#8635; RESET</button>
 </header>
+
+<div id="themeScrim" class="hidden"></div>
+<aside id="themePanel" class="hidden">
+  <div class="tpHead"><b>Themes</b><button id="panelClose" class="btn ghost sm">CLOSE</button></div>
+  <div id="themeRow" class="tpGrid"></div>
+  <div class="tpHead"><b>Fonts</b></div>
+  <div id="fontRow" class="tpGrid"></div>
+  <div id="uiLabel" class="muted small"></div>
+</aside>
 
 <main>
   <section id="screen-setup" class="screen">
@@ -35,14 +40,7 @@
       <div id="swatches" class="swatches"></div>
       <div class="customRow">
         <input type="color" id="customColor" value="#ff3b52">
-        <input type="color" id="customColor2" value="#22d3ee">
-        <span class="preview" id="colorPreview"></span>
       </div>
-      <div class="chips" style="margin-top:10px">
-        <button class="chip" id="solidBtn">Solid (1 color)</button>
-        <button class="chip" id="dualBtn">Dual tone (half &amp; half)</button>
-      </div>
-      <div class="muted small" style="margin-top:8px">Optional 2nd color splits the player's card in half &middot; edit any player's two circles in the list above</div>
     </div>
     <div class="card">
       <div class="cardTop"><h2>Round settings</h2></div>

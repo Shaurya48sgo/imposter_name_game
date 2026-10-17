@@ -6,12 +6,12 @@ Play it here: **https://shaurya48sgo.github.io/imposter_name_game/** (GitHub Pag
 
 ## How to play
 
-1. Add 3–12 players and let each pick a name and colors — presets, any custom color, and an optional second color for half-and-half tiles (**dual tone**). Tap a player's circles any time to recolor them.
+1. Add 3–12 players and let each pick a name and color — presets or any custom color. Tap a player's circle any time to recolor them.
 2. Pick a word category and how close the imposter's hint should be, then start the round.
 3. Pass the phone around. Each player taps their own colored box, presses and holds the circle to peek at their note, and hits **Got it**. Seen boxes turn into colored outlines.
 4. Once everyone has seen their note, tap **Continue**.
-5. Voting: all players are shown at once, like the word grid. The phone is passed to whoever's turn it is (shown at the top), they tap the player they suspect, review "X voted: Y" and confirm. You cannot vote for yourself. A running list shows who voted for whom.
-6. When all votes are in, the **Finalize** step shows the full "who voted who" list. Anyone can still change their vote (tap **Change**, pass the phone, re-pick) until someone taps **Finalize votes — reveal imposter**.
+5. Voting is open and self-serve: all players are shown at once. Whoever wants to vote taps **their own card** (pass the phone), picks the player they suspect, and the card then shows "voted: X" under that player's name. Anyone can vote, change their vote, or **abstain** at any time — no fixed turn order.
+6. Tap **Continue — check who got it right** when voting is done (enabled once at least one vote is cast). Abstaining is allowed and counted as no vote.
 7. Results reveal the imposter, the word, everyone's votes, the points, and the **Final Ranking** (ties share a rank). **Next Round** keeps scores, **Play Again** restarts with the same players and reset scores, and the **Reset** button top-right calls the whole thing off and starts fresh (same players, scores back to 0).
 
 Playing in person? Discuss out loud between reveal and voting. Playing remotely? Hop in a call while using the same link.
@@ -31,6 +31,7 @@ Edge cases, decided for fairness (easy to change in `logic.js`):
 - The imposter votes too — their vote (always for someone else) is counted like any other.
 - "Majority" means strictly more than half of all votes. A tie counts as the imposter not being caught, so the imposter scores +2.
 - "Rare catch" means correct guessers < 1/4 of all voters (or exactly one correct guesser). Example: 2 of 12 catching the imposter earns both +2.
+- Abstaining (or not voting before **Continue**) removes you from the vote math entirely — majority and rare-catch are calculated over actual votes only.
 - Scores accumulate across rounds until you start a new game.
 
 ## Hint closeness (configurable each round)
@@ -45,12 +46,12 @@ The imposter is decided secretly **before** the reveal starts: every player is n
 
 ## Themes & fonts
 
-Top of the page has quick switches, saved to your browser:
+Tap **THEME** (top-left) to open the style panel on the right — every theme and font is listed by name, and your pick is applied instantly and saved to your browser.
 
-- **Themes (16):** Blood (default red/black), Forest (light green on black), Neon, Toxic, Abyss, Ember, Royal, Rose, Gold, Frost, Ghost, Hazard, Ocean, Mocha, Vapor, Sunset
-- **Fonts (15):** Sans, Rounded, Serif, Mono, Display, plus bundled offline fonts: Comic, Typewriter, Horror, Gothic, Bangers, Marker, Manuscript, Deco, Sci-Fi, Pixel
+- **Themes (17):** Blood (default red/black), Forest (light green on black), Night Sky (starry navy), Neon, Toxic, Abyss, Ember, Royal, Rose, Gold, Frost, Ghost, Hazard, Ocean, Mocha, Vapor, Sunset
+- **Fonts (24):** Sans, Rounded, Serif, Mono, Display, plus bundled offline fonts: Comic, Typewriter, Horror, Gothic, Bangers, Marker, Manuscript, Deco, Sci-Fi, Pixel, Zombie, Haunted Hill, Christmare, Eleanor, Dead Walking, Crawlers, Cute Notes, Chasing Cars, Moonstar
 
-The strip at the top always shows the active theme and font name; your pick is saved to the browser.
+The last nine come from downloads on [DaFont](https://www.dafont.com) — they are mostly free for personal use; check each font's license page before any commercial use. All fonts are bundled locally, so the game stays fully offline.
 
 ## Run it locally
 
@@ -79,7 +80,7 @@ To run the smoke test, install jsdom first: `npm i -D jsdom`.
 | File | Purpose |
 |---|---|
 | `index.html` | Screens for setup, reveal, voting, results |
-| `style.css` | Theme system (15 themes, 15 fonts) + all screens |
+| `style.css` | Theme system (17 themes, 24 fonts) + all screens |
 | `words.js` | Word bank: 60 words x 5 categories, 3 hint levels each |
 | `logic.js` | Pure rule functions (word picking, scoring) |
 | `game.js` | UI, state machine, localStorage persistence |

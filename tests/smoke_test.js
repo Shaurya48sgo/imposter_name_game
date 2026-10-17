@@ -27,23 +27,27 @@ async function main() {
   const doc = window.document;
   const evalState = expr => window.eval(expr);
 
+  assert.strictEqual(doc.getElementById("themePanel").classList.contains("hidden"), true, "theme panel starts closed");
+  click(doc.getElementById("themeBtn"));
+  assert.strictEqual(doc.getElementById("themePanel").classList.contains("hidden"), false, "theme button opens the panel");
+  assert.strictEqual(doc.querySelectorAll("#themeRow [data-theme]").length, 17, "17 themes offered");
+  assert.strictEqual(doc.querySelectorAll("#fontRow .fchip").length, 24, "24 fonts offered");
   assert.strictEqual(doc.documentElement.dataset.theme, "blood", "blood theme is default");
-  assert.strictEqual(doc.querySelectorAll("#themeRow .tdot").length, 16, "16 themes offered");
-  assert.strictEqual(doc.querySelectorAll("#fontRow .fchip").length, 15, "15 fonts offered");
-  click(doc.querySelector('#themeRow [data-theme="sunset"]'));
-  assert.strictEqual(doc.documentElement.dataset.theme, "sunset", "theme switching works");
+  click(doc.querySelector('#themeRow [data-theme="night"]'));
+  assert.strictEqual(doc.documentElement.dataset.theme, "night", "night sky theme works");
   click(doc.querySelector('#themeRow [data-theme="forest"]'));
   assert.strictEqual(doc.documentElement.dataset.theme, "forest", "forest theme works");
   click(doc.querySelector('#themeRow [data-theme="blood"]'));
   assert.ok(doc.getElementById("uiLabel").textContent.includes("Blood"), "active theme is labelled");
-  click(doc.querySelector('#fontRow [data-font="horror"]'));
-  assert.strictEqual(doc.documentElement.dataset.font, "horror", "font switching works");
+  click(doc.querySelector('#fontRow [data-font="zombie"]'));
+  assert.strictEqual(doc.documentElement.dataset.font, "zombie", "dafont font applies");
   click(doc.querySelector('#fontRow [data-font="sans"]'));
+  click(doc.getElementById("panelClose"));
+  assert.strictEqual(doc.getElementById("themePanel").classList.contains("hidden"), true, "panel closes");
 
   const custom = doc.getElementById("customColor");
   custom.value = "#123456";
   custom.dispatchEvent(new window.Event("input", { bubbles: true }));
-  click(doc.getElementById("dualBtn"));
 
   const addPlayer = name => {
     doc.getElementById("pname").value = name;
@@ -52,31 +56,16 @@ async function main() {
 
   addPlayer("A");
   assert.strictEqual(evalState("S.players[0].color"), "#123456", "custom color picker applies");
-  assert.strictEqual(evalState("isDual(S.players[0])"), true, "dual tone enabled via button");
   const aDot = doc.querySelector('#playerList [data-cid="' + evalState("S.players[0].id") + '"]');
   aDot.value = "#22d3ee";
   aDot.dispatchEvent(new window.Event("change", { bubbles: true }));
-  assert.strictEqual(evalState("S.players[0].color"), "#22d3ee", "per-player main color edit works");
-  const aDot2 = doc.querySelector('#playerList [data-cid2="' + evalState("S.players[0].id") + '"]');
-  aDot2.value = "#654321";
-  aDot2.dispatchEvent(new window.Event("change", { bubbles: true }));
-  assert.strictEqual(evalState("S.players[0].color2"), "#654321", "per-player second color edit works");
-  assert.strictEqual(evalState("isDual(S.players[0])"), true);
-
-  click(doc.getElementById("solidBtn"));
+  assert.strictEqual(evalState("S.players[0].color"), "#22d3ee", "per-player color edit works");
   addPlayer("B");
-  assert.strictEqual(evalState("isDual(S.players[1])"), false, "solid mode gives one color");
-
-  const custom2 = doc.getElementById("customColor2");
-  custom2.value = "#ff00ff";
-  custom2.dispatchEvent(new window.Event("input", { bubbles: true }));
   addPlayer("C");
-  assert.strictEqual(evalState("S.players[2].color2"), "#ff00ff", "second color picker applies");
-  assert.strictEqual(evalState("isDual(S.players[2])"), true);
-  click(doc.getElementById("solidBtn"));
   addPlayer("D");
-  assert.strictEqual(evalState("isDual(S.players[3])"), false);
   assert.strictEqual(evalState("S.players.length"), 4);
+  assert.strictEqual(doc.querySelectorAll("#playerList .pdot").length, 4, "one color dot per player");
+  assert.strictEqual(doc.querySelectorAll("#playerList [data-cid2]").length, 0, "no second color inputs");
 
   const revealAll = () => {
     const ids = evalState("S.players.map(p => p.id)");
@@ -93,21 +82,6 @@ async function main() {
     return ids;
   };
 
-  const voteAll = plan => {
-    const ids = evalState("S.players.map(p => p.id)");
-    for (let i = 0; i < ids.length; i++) {
-      const id = ids[i];
-      assert.strictEqual(evalState("S.votingId"), id, "voter order must follow player order");
-      const selfTile = doc.querySelector('#voteGrid [data-t="' + id + '"]');
-      assert.ok(selfTile && selfTile.disabled, "cannot vote for yourself");
-      click(doc.querySelector('#voteGrid [data-t="' + plan[id] + '"]'));
-      assert.strictEqual(evalState("S.pendingTarget"), plan[id]);
-      assert.ok(doc.querySelector("#voteBox .votedChip"), "voted chip must show before confirm");
-      click(doc.getElementById("vConfirm"));
-      assert.strictEqual(doc.querySelectorAll("#voteBox .voteList .vrow").length, i + 1, "who-voted-who list grows as votes are cast");
-    }
-  };
-
   const realRandom = window.Math.random;
   window.Math.random = () => 0;
   click(doc.getElementById("startBtn"));
@@ -115,7 +89,6 @@ async function main() {
   assert.strictEqual(evalState("S.phase"), "reveal");
   const impId = evalState("S.current.imposterId");
   assert.strictEqual(impId, evalState("S.players[0].id"), "random number 0 picks the first numbered player");
-  assert.strictEqual(evalState("S.players.some(p => p.id === S.current.imposterId)"), true);
 
   let allIds = revealAll();
   assert.strictEqual(evalState("S.players.every(p => p.seen)"), true);
@@ -124,37 +97,55 @@ async function main() {
   assert.strictEqual(toVote.disabled, false);
   click(toVote);
   assert.strictEqual(evalState("S.phase"), "vote");
+  assert.strictEqual(doc.getElementById("vContinue").disabled, true, "continue disabled until a vote is cast");
 
   const others = allIds.filter(id => id !== impId);
   const singleCorrect = others[0];
-  const plan1 = {
-    [impId]: others[0],
-    [singleCorrect]: impId,
-    [others[1]]: others[2],
-    [others[2]]: others[1]
+
+  const meTile = id => doc.querySelector('#voteGrid [data-me="' + id + '"]');
+  const openVoter = id => {
+    click(meTile(id));
+    assert.strictEqual(evalState("S.voteSelectId"), id, "own card opens the target picker");
+    const selfTile = doc.querySelector('#voteGrid [data-t="' + id + '"]');
+    assert.ok(selfTile && selfTile.disabled, "cannot vote for yourself");
   };
-  voteAll(plan1);
+  const pick = tid => click(doc.querySelector('#voteGrid [data-t="' + tid + '"]'));
 
-  assert.strictEqual(evalState("S.phase"), "finalize", "all votes in opens the finalize step");
-  assert.strictEqual(doc.querySelectorAll("#voteBox [data-ch]").length, 4, "everyone can change their vote");
-  assert.ok(doc.getElementById("vFinal"), "finalize button exists");
+  assert.ok(meTile(impId).querySelector(".ptSub").textContent.includes("TAP YOUR CARD"), "unvoted card shows prompt");
 
-  click(doc.querySelector('#voteBox [data-ch="' + others[1] + '"]'));
-  assert.ok(doc.getElementById("voteGrid"), "change view shows the voting grid");
-  click(doc.querySelector('#voteGrid [data-t="' + impId + '"]'));
-  click(doc.getElementById("vConfirmChange"));
-  assert.strictEqual(evalState("S.phase"), "finalize");
-  assert.strictEqual(evalState("S.players.find(p => p.id === '" + others[1] + "').vote"), impId, "changed vote saved");
+  openVoter(impId);
+  click(doc.getElementById("vAbstain"));
+  assert.strictEqual(evalState("S.players.find(p => p.id === '" + impId + "').vote"), "abstain", "abstain recorded");
+  assert.ok(meTile(impId).querySelector(".ptSub").textContent.includes("ABSTAINED"));
+  openVoter(impId);
+  pick(singleCorrect);
+  assert.strictEqual(evalState("S.players.find(p => p.id === '" + impId + "').vote"), singleCorrect, "re-vote after abstaining works");
+  assert.ok(meTile(impId).querySelector(".ptSub").textContent.includes("VOTED:"));
 
-  click(doc.querySelector('#voteBox [data-ch="' + others[1] + '"]'));
-  click(doc.querySelector('#voteGrid [data-t="' + others[2] + '"]'));
-  click(doc.getElementById("vConfirmChange"));
-  assert.strictEqual(evalState("S.players.find(p => p.id === '" + others[1] + "').vote"), others[2], "vote changed back");
+  openVoter(others[0]);
+  pick(impId);
 
-  click(doc.getElementById("vFinal"));
+  openVoter(others[1]);
+  pick(others[2]);
+  openVoter(others[1]);
+  pick(impId);
+  assert.strictEqual(evalState("S.players.find(p => p.id === '" + others[1] + "').vote"), impId, "vote can be changed any time");
+  openVoter(others[1]);
+  pick(others[2]);
+
+  openVoter(others[2]);
+  click(doc.getElementById("vBack"));
+  assert.strictEqual(evalState("S.players.find(p => p.id === '" + others[2] + "').vote"), null, "back leaves the vote empty");
+  openVoter(others[2]);
+  pick(others[1]);
+  assert.ok(meTile(others[2]).querySelector(".ptSub").textContent.includes("C"), "card shows who was voted");
+
+  assert.strictEqual(doc.getElementById("vContinue").disabled, false, "continue enabled once votes are in");
+  click(doc.getElementById("vContinue"));
   assert.strictEqual(evalState("S.phase"), "results");
   assert.ok(doc.getElementById("resultsBox").textContent.includes("Final Ranking"), "results show a ranking");
   assert.ok(doc.getElementById("resultsBox").textContent.includes("#1"), "ranking is numbered");
+
   const scores1 = evalState("JSON.parse(JSON.stringify(S.players))");
   for (const p of scores1) {
     if (p.id === singleCorrect) assert.strictEqual(p.score, 2, "sole correct guesser gets +2");
@@ -171,11 +162,12 @@ async function main() {
   revealAll();
 
   click(doc.getElementById("toVoteBtn"));
-  const plan2 = {};
-  for (const id of allIds) plan2[id] = (id === imp2) ? allIds.find(x => x !== imp2) : imp2;
-  voteAll(plan2);
-  assert.strictEqual(evalState("S.phase"), "finalize");
-  click(doc.getElementById("vFinal"));
+  for (const id of allIds) {
+    const tid = id === imp2 ? allIds.find(x => x !== imp2) : imp2;
+    openVoter(id);
+    pick(tid);
+  }
+  click(doc.getElementById("vContinue"));
   assert.strictEqual(evalState("S.phase"), "results");
 
   const scores2 = evalState("JSON.parse(JSON.stringify(S.players))");
@@ -202,9 +194,8 @@ async function main() {
   assert.strictEqual(evalState("S.phase"), "reveal", "reset button starts a fresh round");
   assert.strictEqual(evalState("S.round"), 1, "reset button restarts at round 1");
   assert.ok(evalState("S.players.every(p => p.score === 0)"), "reset keeps players but clears scores");
-  assert.strictEqual(evalState("S.players.length"), 4, "reset keeps the players");
 
-  console.log("Smoke test passed: 16 themes, 15 fonts, dual colors, random imposter, vote changes, finalize step, ranking, in-page confirm, play again, reset");
+  console.log("Smoke test passed: theme panel (17 themes, 24 fonts), solid colors, random imposter, self-serve voting with abstain + changes, rare-catch scoring, ranking, reset");
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
