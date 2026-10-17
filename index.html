@@ -18,6 +18,7 @@
   </div>
   <h1>WHO IS THE IMPOSTER?</h1>
   <div id="roundBadge" class="hidden"></div>
+  <button id="resetBtn" class="resetBtn" title="Reset game with same players">&#8635; RESET</button>
 </header>
 
 <main>
@@ -33,8 +34,14 @@
       <div id="swatches" class="swatches"></div>
       <div class="customRow">
         <input type="color" id="customColor" value="#ff3b52">
-        <span class="muted small">or pick any custom color &middot; tap a player's circle to recolor them</span>
+        <input type="color" id="customColor2" value="#22d3ee">
+        <span class="preview" id="colorPreview"></span>
       </div>
+      <div class="chips" style="margin-top:10px">
+        <button class="chip" id="solidBtn">Solid (1 color)</button>
+        <button class="chip" id="dualBtn">Dual tone (half &amp; half)</button>
+      </div>
+      <div class="muted small" style="margin-top:8px">Optional 2nd color splits the player's card in half &middot; edit any player's two circles in the list above</div>
     </div>
     <div class="card">
       <div class="cardTop"><h2>Round settings</h2></div>

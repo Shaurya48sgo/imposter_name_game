@@ -9,32 +9,56 @@ const THEMES = [
   ["neon", "Neon", "#22d3ee", "#0a0a14"],
   ["toxic", "Toxic", "#39ff14", "#050a04"],
   ["abyss", "Abyss", "#4f7cff", "#03060f"],
-  ["ember", "Ember", "#ff8c1a", "#0c0502"]
+  ["ember", "Ember", "#ff8c1a", "#0c0502"],
+  ["royal", "Royal", "#b06bff", "#0d0518"],
+  ["rose", "Rose", "#ff4d94", "#12030a"],
+  ["gold", "Gold", "#f5c445", "#0c0903"],
+  ["frost", "Frost", "#67e8f9", "#061018"],
+  ["ghost", "Ghost", "#e5e7eb", "#0a0a0a"],
+  ["hazard", "Hazard", "#facc15", "#0d0d05"],
+  ["ocean", "Ocean", "#2dd4bf", "#02121a"],
+  ["mocha", "Mocha", "#c08552", "#0f0906"],
+  ["vapor", "Vapor", "#ff71ce", "#120a24"],
+  ["sunset", "Sunset", "#ff8a4c", "#140612"]
 ];
 const FONTS = [
   ["sans", "Sans", "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"],
   ["rounded", "Rounded", "ui-rounded,'Varela Round','Nunito','Trebuchet MS',system-ui,sans-serif"],
   ["serif", "Serif", "Georgia,'Times New Roman',serif"],
   ["mono", "Mono", "ui-monospace,'Cascadia Mono','Roboto Mono',Consolas,monospace"],
-  ["display", "Display", "Impact,'Arial Black','Franklin Gothic Medium',sans-serif"]
+  ["display", "Display", "Impact,'Arial Black','Franklin Gothic Medium',sans-serif"],
+  ["comic", "Comic", "'Comic Neue','Comic Sans MS','Chalkboard SE',cursive"],
+  ["typewriter", "Typewriter", "'Special Elite',Courier,'Courier New',monospace"],
+  ["horror", "Horror", "'Creepster',Impact,'Arial Black',fantasy"],
+  ["gothic", "Gothic", "'Pirata One','UnifrakturMaguntia',Papyrus,serif"],
+  ["bangers", "Bangers", "'Bangers','Comic Sans MS',cursive"],
+  ["marker", "Marker", "'Permanent Marker','Bradley Hand',cursive"],
+  ["manuscript", "Manuscript", "'IM Fell English',Georgia,serif"],
+  ["deco", "Deco", "'Monoton','Copperplate',fantasy"],
+  ["scifi", "Sci-Fi", "'Orbitron',system-ui,sans-serif"],
+  ["pixel", "Pixel", "'Press Start 2P',monospace"]
 ];
 
 let S = null;
 let UI = { theme: "blood", font: "sans" };
-let pickColor = COLORS[0], heldOnce = false, audioCtx = null, toastT = null;
+let pickColor = COLORS[0], pickColor2 = null, heldOnce = false, audioCtx = null, toastT = null;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const byId = id => S.players.find(p => p.id === id);
 const darkText = hex => luminance(hex) > 0.55;
 const ink = hex => darkText(hex) ? "#08131c" : "#f4f7ff";
+const isDual = p => !!p.color2 && p.color2.toLowerCase() !== p.color.toLowerCase();
+const paint = p => isDual(p) ? `linear-gradient(135deg,${p.color} 50%,${p.color2} 50%)` : p.color;
+const ink2 = p => isDual(p) ? ((luminance(p.color) + luminance(p.color2)) / 2 > 0.55 ? "#08131c" : "#f4f7ff") : ink(p.color);
+const mix = (c1, c2) => `linear-gradient(135deg,${c1} 50%,${c2} 50%)`;
 
 function newState() {
   return {
     v: 1, phase: "setup", players: [], round: 0,
     settings: { category: "All", closeness: "medium" },
     current: null, openId: null, revealStep: "handoff",
-    votingId: null, pendingTarget: null, lastResult: null, bag: []
+    votingId: null, pendingTarget: null, finalizeId: null, lastResult: null
   };
 }
 
@@ -112,25 +136,9 @@ function toast(m) {
 addEventListener("visibilitychange", () => { if (S) save(); });
 addEventListener("pagehide", () => { if (S) save(); });
 
-function shuffled(a) {
-  const r = [...a];
-  for (let i = r.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [r[i], r[j]] = [r[j], r[i]];
-  }
-  return r;
-}
-
 function drawImposter() {
-  S.bag = (S.bag || []).filter(id => S.players.some(p => p.id === id));
-  if (!S.bag.length) {
-    S.bag = shuffled(S.players.map(p => p.id));
-    if (S.current && S.bag.length > 1 && S.bag[S.bag.length - 1] === S.current.imposterId) {
-      const j = S.bag.findIndex(id => id !== S.current.imposterId);
-      [S.bag[j], S.bag[S.bag.length - 1]] = [S.bag[S.bag.length - 1], S.bag[j]];
-    }
-  }
-  return S.bag.pop();
+  const idx = Math.floor(Math.random() * S.players.length);
+  return S.players[idx].id;
 }
 
 function render() {
@@ -142,6 +150,7 @@ function render() {
   if (S.phase === "setup") renderSetup();
   else if (S.phase === "reveal") { renderReveal(); renderOverlay(); }
   else if (S.phase === "vote") renderVote();
+  else if (S.phase === "finalize") renderFinalize();
   else if (S.phase === "results") renderResults();
   save();
 }
@@ -153,7 +162,8 @@ function renderSetup() {
   $("startNote").classList.toggle("hidden", S.players.length >= MIN_PLAYERS);
   const list = $("playerList");
   list.innerHTML = S.players.map(p =>
-    `<div class="prow"><input type="color" class="pdot" data-cid="${p.id}" value="${p.color}" title="Change color">` +
+    `<div class="prow"><input type="color" class="pdot" data-cid="${p.id}" value="${p.color}" title="Main color">` +
+    `<input type="color" class="pdot${isDual(p) ? "" : " pdotOff"}" data-cid2="${p.id}" value="${p.color2 || p.color}" title="Second color (half &amp; half)">` +
     `<b>${esc(p.name)}</b>` +
     (p.score ? `<span class="miniScore">${p.score} pts</span>` : "") +
     `<button class="xbtn" data-del="${p.id}">&#10005;</button></div>`
@@ -164,7 +174,11 @@ function renderSetup() {
   });
   list.querySelectorAll("[data-cid]").forEach(inp => inp.onchange = () => {
     const p = byId(inp.dataset.cid);
-    if (p) { p.color = inp.value; save(); }
+    if (p) { p.color = inp.value; save(); render(); }
+  });
+  list.querySelectorAll("[data-cid2]").forEach(inp => inp.onchange = () => {
+    const p = byId(inp.dataset.cid2);
+    if (p) { p.color2 = inp.value; save(); render(); }
   });
   const sw = $("swatches");
   sw.innerHTML = COLORS.map(c => `<button class="sw${c === pickColor ? " sel" : ""}" data-c="${c}" style="background:${c};color:${c}"></button>`).join("");
@@ -172,6 +186,12 @@ function renderSetup() {
   const custom = $("customColor");
   custom.value = /^#[0-9a-fA-F]{6}$/.test(pickColor) ? pickColor : COLORS[0];
   custom.classList.toggle("sel", !COLORS.includes(pickColor));
+  const custom2 = $("customColor2");
+  custom2.value = pickColor2 || pickColor;
+  custom2.classList.toggle("sel", !!pickColor2);
+  $("solidBtn").classList.toggle("on", !pickColor2);
+  $("dualBtn").classList.toggle("on", !!pickColor2);
+  $("colorPreview").style.background = pickColor2 && pickColor2 !== pickColor ? mix(pickColor, pickColor2) : pickColor;
   const cat = $("catRow");
   cat.innerHTML = CATS.map(c => `<button class="chip${S.settings.category === c ? " on" : ""}" data-cat="${c}">${c}</button>`).join("");
   cat.querySelectorAll("[data-cat]").forEach(b => b.onclick = () => { S.settings.category = b.dataset.cat; render(); });
@@ -186,7 +206,7 @@ function addPlayer() {
   const name = inp.value.trim().slice(0, 12) || ("Player " + (S.players.length + 1));
   S.players.push({
     id: "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    name, color: pickColor, score: 0, seen: false, vote: null
+    name, color: pickColor, color2: pickColor2 || pickColor, score: 0, seen: false, vote: null
   });
   pickColor = COLORS.find(c => !S.players.some(p => p.color === c)) || pickColor;
   inp.value = "";
@@ -201,7 +221,7 @@ function startRound() {
   S.players.forEach(p => { p.seen = false; p.vote = null; });
   S.round++;
   S.phase = "reveal"; S.openId = null; S.revealStep = "handoff";
-  S.votingId = null; S.pendingTarget = null; S.lastResult = null;
+  S.votingId = null; S.pendingTarget = null; S.finalizeId = null; S.lastResult = null;
   heldOnce = false;
   render();
 }
@@ -215,7 +235,7 @@ function renderReveal() {
     : "CONTINUE TO VOTING \u2192";
   const grid = $("revealGrid");
   grid.innerHTML = S.players.map(p =>
-    `<button class="ptile ${p.seen ? "seen" : "unseen"}" data-p="${p.id}" style="--pc:${p.color};color:${p.seen ? p.color : ink(p.color)}">` +
+    `<button class="ptile ${p.seen ? "seen" : "unseen"}" data-p="${p.id}" style="--pc:${p.color};${p.seen ? "" : "background:" + paint(p) + ";"}color:${p.seen ? p.color : ink2(p)}">` +
     `<span class="ptName">${esc(p.name)}</span>` +
     `<span class="ptSub">${p.seen ? "SEEN \u2713" : "TAP TO VIEW"}</span></button>`
   ).join("");
@@ -292,10 +312,21 @@ function bindHoldZone(p, imp) {
   z.addEventListener("touchcancel", hide, { passive: false });
 }
 
+function votesSoFarHtml(showChange) {
+  const rows = S.players.filter(p => p.vote !== null).map(p => {
+    const t = byId(p.vote);
+    return `<div class="vrow"><span class="dot" style="background:${paint(p)}"></span><span class="vname">${esc(p.name)}</span>` +
+      `<span class="arrow">&rarr;</span><span class="vname">${t ? esc(t.name) : "&mdash;"}</span>` +
+      (showChange ? `<span class="spacer"></span><button class="btn ghost sm" data-ch="${p.id}">Change</button>` : "") +
+      `</div>`;
+  }).join("");
+  return rows ? `<div class="voteListHead muted small">${showChange ? "Tap Change to let someone re-vote" : "Votes so far"}</div><div class="voteList">${rows}</div>` : "";
+}
+
 function renderVote() {
   const voted = S.players.filter(p => p.vote !== null).length;
   const voter = S.players.find(p => p.vote === null);
-  if (!voter) { finishVoting(); return; }
+  if (!voter) { S.phase = "finalize"; S.votingId = null; S.pendingTarget = null; render(); return; }
   S.votingId = voter.id;
   $("voteTurn").innerHTML = "Pass the phone to <b style=\"color:" + voter.color + "\">" + esc(voter.name) + "</b>";
   $("voteProgress").textContent = voted + " / " + S.players.length + " votes cast";
@@ -304,16 +335,17 @@ function renderVote() {
     `<div class="pGrid small" id="voteGrid">` + S.players.map(p => {
       const isSelf = p.id === voter.id;
       const sel = S.pendingTarget === p.id;
-      return `<button class="ptile ${sel ? "voted" : "unseen"}" data-t="${p.id}" ${isSelf ? "disabled" : ""} style="--pc:${p.color};color:${ink(p.color)}">` +
+      return `<button class="ptile ${sel ? "voted" : "unseen"}" data-t="${p.id}" ${isSelf ? "disabled" : ""} style="--pc:${p.color};background:${paint(p)};color:${ink2(p)}">` +
         `<span class="ptName">${esc(p.name)}</span>` +
         `<span class="ptSub">${isSelf ? "YOU" : "TAP TO VOTE"}</span></button>`;
     }).join("") + `</div>` +
     `<div class="votedBar">` + (target
-      ? `<div class="votedChip" style="--pc:${target.color}"><span class="dot" style="background:${target.color}"></span>` +
+      ? `<div class="votedChip" style="--pc:${target.color}"><span class="dot" style="background:${paint(target)}"></span>` +
         `<span class="muted small">${esc(voter.name)} voted:</span><b>${esc(target.name)}</b></div>` +
         `<button class="btn big full" id="vConfirm">CONFIRM VOTE</button>` +
         `<button class="btn ghost full" id="vChange">Change</button>`
-      : `<div class="muted small">Tap the player you suspect, then confirm.</div>`) + `</div>`;
+      : `<div class="muted small">Tap the player you suspect, then confirm.</div>`) + `</div>` +
+    votesSoFarHtml(false);
   $("voteGrid").querySelectorAll("[data-t]").forEach(b => b.onclick = () => {
     S.pendingTarget = b.dataset.t;
     render();
@@ -329,6 +361,50 @@ function renderVote() {
   }
 }
 
+function renderFinalize() {
+  const changing = S.finalizeId ? byId(S.finalizeId) : null;
+  if (!changing) {
+    S.votingId = null; S.pendingTarget = null;
+    $("voteTurn").innerHTML = "All " + S.players.length + " votes are in";
+    $("voteProgress").textContent = "Everyone can change their vote until you finalize.";
+    $("voteBox").innerHTML = votesSoFarHtml(true) +
+      `<div class="votedBar"><button class="btn big full" id="vFinal">FINALIZE VOTES &mdash; REVEAL IMPOSTER</button></div>`;
+    $("voteBox").querySelectorAll("[data-ch]").forEach(b => b.onclick = () => {
+      S.finalizeId = b.dataset.ch;
+      S.pendingTarget = null;
+      render();
+    });
+    $("vFinal").onclick = finishVoting;
+    return;
+  }
+  const target = S.pendingTarget ? byId(S.pendingTarget) : null;
+  S.votingId = changing.id;
+  $("voteTurn").innerHTML = "Pass the phone to <b style=\"color:" + changing.color + "\">" + esc(changing.name) + "</b> to re-vote";
+  $("voteProgress").textContent = "Their current vote: " + (byId(changing.vote) ? byId(changing.vote).name : "\u2014");
+  $("voteBox").innerHTML =
+    `<div class="pGrid small" id="voteGrid">` + S.players.map(p => {
+      const isSelf = p.id === changing.id;
+      const sel = S.pendingTarget === p.id;
+      return `<button class="ptile ${sel ? "voted" : "unseen"}" data-t="${p.id}" ${isSelf ? "disabled" : ""} style="--pc:${p.color};background:${paint(p)};color:${ink2(p)}">` +
+        `<span class="ptName">${esc(p.name)}</span>` +
+        `<span class="ptSub">${isSelf ? "YOU" : (changing.vote === p.id ? "CURRENT VOTE" : "TAP TO VOTE")}</span></button>`;
+    }).join("") + `</div>` +
+    `<div class="votedBar">` + (target
+      ? `<div class="votedChip" style="--pc:${target.color}"><span class="dot" style="background:${paint(target)}"></span>` +
+        `<span class="muted small">${esc(changing.name)} changes to:</span><b>${esc(target.name)}</b></div>` +
+        `<button class="btn big full" id="vConfirmChange">SAVE NEW VOTE</button>`
+      : `<div class="muted small">Tap a different player to change the vote.</div>`) +
+    `<button class="btn ghost full" id="vCancelChange">Back &mdash; no change</button></div>`;
+  $("voteBox").querySelectorAll("[data-t]").forEach(b => b.onclick = () => { S.pendingTarget = b.dataset.t; render(); });
+  if (target) $("vConfirmChange").onclick = () => {
+    changing.vote = target.id;
+    S.pendingTarget = null; S.finalizeId = null;
+    tone(440, 0.06);
+    render();
+  };
+  $("vCancelChange").onclick = () => { S.pendingTarget = null; S.finalizeId = null; render(); };
+}
+
 function finishVoting() {
   const votes = {};
   S.players.forEach(p => { votes[p.id] = p.vote; });
@@ -337,10 +413,10 @@ function finishVoting() {
   S.lastResult = {
     imposterId: S.current.imposterId, word: S.current.word, hint: S.current.hint,
     category: S.current.category, votes, deltas: r.deltas,
-    majorityCorrect: r.majorityCorrect, correctCount: r.correctCount, total: r.total
+    majorityCorrect: r.majorityCorrect, correctCount: r.correctCount, total: r.total, rareCatch: r.rareCatch
   };
   S.phase = "results";
-  S.votingId = null; S.pendingTarget = null;
+  S.votingId = null; S.pendingTarget = null; S.finalizeId = null;
   tone(r.majorityCorrect ? 620 : 180, 0.2);
   render();
 }
@@ -350,6 +426,12 @@ function renderResults() {
   if (!R) { S.phase = "setup"; render(); return; }
   const imp = byId(R.imposterId);
   const sorted = [...S.players].sort((a, b) => b.score - a.score);
+  let rank = 0, prev = null;
+  const ranked = sorted.map((p, i) => {
+    if (prev === null || p.score !== prev) rank = i + 1;
+    prev = p.score;
+    return { p, rank };
+  });
   $("resultsBox").innerHTML =
     `<div class="revealWrap">
       <div class="muted small">THE IMPOSTER WAS</div>
@@ -358,31 +440,32 @@ function renderResults() {
       <div class="badge ${R.majorityCorrect ? "good" : "bad"}">${R.majorityCorrect
         ? "Majority guessed right &mdash; imposter scores 0"
         : "Majority guessed wrong &mdash; imposter scores +2"}</div>
+      ${R.rareCatch ? `<div class="badge good">Rare catch &mdash; under 1/4 guessed right, correct guessers score +2</div>` : ""}
     </div>
     <div class="card"><h3>Votes</h3>${S.players.map(p => {
       const t = byId(R.votes[p.id]);
       const ok = R.votes[p.id] === R.imposterId;
       const d = R.deltas[p.id] || 0;
-      return `<div class="vrow"><span class="dot" style="background:${p.color}"></span><span class="vname">${esc(p.name)}</span>` +
+      return `<div class="vrow"><span class="dot" style="background:${paint(p)}"></span><span class="vname">${esc(p.name)}</span>` +
         `<span class="arrow">&rarr;</span><span class="vname">${t ? esc(t.name) : "&mdash;"}</span>` +
         `<span class="vtag ${ok ? "ok" : "no"}">${ok ? "correct" : "wrong"}</span>` +
         `<span class="vpts">+${d}</span></div>`;
     }).join("")}</div>
-    <div class="card"><h3>Scoreboard</h3>${sorted.map((p, i) =>
-      `<div class="srow"><span class="rank">${i === 0 ? "\u2605" : (i + 1)}</span>` +
-      `<span class="dot" style="background:${p.color}"></span><b>${esc(p.name)}</b>` +
+    <div class="card"><h3>Final Ranking</h3>${ranked.map(({ p, rank }) =>
+      `<div class="srow"><span class="rank${rank === 1 ? " top" : ""}">#${rank}</span>` +
+      `<span class="dot" style="background:${paint(p)}"></span><b>${esc(p.name)}</b>` +
       `<span class="spacer"></span><b class="score">${p.score}</b></div>`).join("")}</div>`;
   $("nextBtn").onclick = () => startRound();
   $("playAgainBtn").onclick = () => {
     if (!confirm("Play again? Scores reset, same players.")) return;
-    S.round = 0; S.bag = [];
+    S.round = 0;
     S.players.forEach(p => { p.score = 0; });
     startRound();
   };
   $("setupBtn").onclick = () => {
     S.phase = "setup";
     S.players.forEach(p => { p.seen = false; p.vote = null; });
-    S.openId = null; S.votingId = null; S.pendingTarget = null;
+    S.openId = null; S.votingId = null; S.pendingTarget = null; S.finalizeId = null;
     render();
   };
 }
@@ -401,6 +484,16 @@ $("addBtn").onclick = addPlayer;
 $("pname").addEventListener("keydown", e => { if (e.key === "Enter") addPlayer(); });
 $("startBtn").onclick = startRound;
 $("customColor").oninput = () => { pickColor = $("customColor").value; render(); };
+$("customColor2").oninput = () => { pickColor2 = $("customColor2").value; render(); };
+$("solidBtn").onclick = () => { pickColor2 = null; render(); };
+$("dualBtn").onclick = () => { pickColor2 = pickColor2 || opposite(pickColor); render(); };
+$("resetBtn").onclick = () => {
+  if (!confirm("Reset the game? Same players, scores back to 0, brand new round.")) return;
+  if (S.players.length < MIN_PLAYERS) return toast("Need at least " + MIN_PLAYERS + " players");
+  S.round = 0;
+  S.players.forEach(p => { p.score = 0; });
+  startRound();
+};
 $("toVoteBtn").onclick = () => {
   if (S.players.some(p => !p.seen)) return toast("Everyone must see their note first");
   S.phase = "vote"; S.pendingTarget = null;
@@ -414,9 +507,9 @@ $("newGameBtn").onclick = () => {
 };
 $("abandonBtn").onclick = () => {
   if (!confirm("Abandon this round? Finished rounds keep their scores.")) return;
-  if (S.phase === "reveal" || S.phase === "vote") S.round--;
+  if (S.phase === "reveal" || S.phase === "vote" || S.phase === "finalize") S.round--;
   S.phase = "setup"; S.current = null; S.lastResult = null;
-  S.openId = null; S.votingId = null; S.pendingTarget = null;
+  S.openId = null; S.votingId = null; S.pendingTarget = null; S.finalizeId = null;
   S.players.forEach(p => { p.seen = false; p.vote = null; });
   render();
 };
