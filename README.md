@@ -37,9 +37,9 @@ Edge cases, decided for fairness (easy to change in `logic.js`):
 
 Hints are deliberately cryptic — never a direct description:
 
-- **Close** — a strong association ("Often delivered" for *Pizza*)
-- **Medium** — context only ("Shared between friends")
-- **Vague** — a single cryptic fragment ("Round")
+- **Close** — an indirect consequence, never a description ("The box never opens gently" for *Pizza*)
+- **Medium** — mood or context only ("A circle divided beyond reason")
+- **Vague** — a single abstract word ("Corners")
 
 The imposter is decided secretly **before** the reveal starts: every player is numbered and one random number is drawn — a plain uniform random pick, so anyone can be the imposter (including twice in a row). If you prefer forced rotation, that is easy to change in `drawImposter()` in `game.js`.
 
@@ -47,8 +47,10 @@ The imposter is decided secretly **before** the reveal starts: every player is n
 
 Top of the page has quick switches, saved to your browser:
 
-- **Themes (15):** Blood (default red/black), Neon, Toxic, Abyss, Ember, Royal, Rose, Gold, Frost, Ghost, Hazard, Ocean, Mocha, Vapor, Sunset
+- **Themes (16):** Blood (default red/black), Forest (light green on black), Neon, Toxic, Abyss, Ember, Royal, Rose, Gold, Frost, Ghost, Hazard, Ocean, Mocha, Vapor, Sunset
 - **Fonts (15):** Sans, Rounded, Serif, Mono, Display, plus bundled offline fonts: Comic, Typewriter, Horror, Gothic, Bangers, Marker, Manuscript, Deco, Sci-Fi, Pixel
+
+The strip at the top always shows the active theme and font name; your pick is saved to the browser.
 
 ## Run it locally
 
@@ -95,5 +97,5 @@ To run the smoke test, install jsdom first: `npm i -D jsdom`.
 Add entries to `words.js` — every word needs three hints, kept cryptic on purpose:
 
 ```js
-{ w: "Pizza", close: "Comes in a box", medium: "Friday night order", vague: "Slices" }
+{ w: "Pizza", close: "The box never opens gently", medium: "A circle divided beyond reason", vague: "Corners" }
 ```

@@ -28,11 +28,14 @@ async function main() {
   const evalState = expr => window.eval(expr);
 
   assert.strictEqual(doc.documentElement.dataset.theme, "blood", "blood theme is default");
-  assert.strictEqual(doc.querySelectorAll("#themeRow .tdot").length, 15, "15 themes offered");
+  assert.strictEqual(doc.querySelectorAll("#themeRow .tdot").length, 16, "16 themes offered");
   assert.strictEqual(doc.querySelectorAll("#fontRow .fchip").length, 15, "15 fonts offered");
   click(doc.querySelector('#themeRow [data-theme="sunset"]'));
   assert.strictEqual(doc.documentElement.dataset.theme, "sunset", "theme switching works");
+  click(doc.querySelector('#themeRow [data-theme="forest"]'));
+  assert.strictEqual(doc.documentElement.dataset.theme, "forest", "forest theme works");
   click(doc.querySelector('#themeRow [data-theme="blood"]'));
+  assert.ok(doc.getElementById("uiLabel").textContent.includes("Blood"), "active theme is labelled");
   click(doc.querySelector('#fontRow [data-font="horror"]'));
   assert.strictEqual(doc.documentElement.dataset.font, "horror", "font switching works");
   click(doc.querySelector('#fontRow [data-font="sans"]'));
@@ -182,19 +185,26 @@ async function main() {
     else assert.strictEqual(p.score, before + 1, "each correct voter gets +1");
   }
 
-  window.confirm = () => true;
   click(doc.getElementById("playAgainBtn"));
+  assert.strictEqual(doc.getElementById("confirmModal").classList.contains("hidden"), false, "confirm modal opens");
+  click(doc.getElementById("confirmYes"));
   assert.strictEqual(evalState("S.phase"), "reveal");
   assert.strictEqual(evalState("S.round"), 1, "play again restarts at round 1");
   assert.ok(evalState("S.players.every(p => p.score === 0)"), "play again resets scores");
 
+  const roundBefore = evalState("S.round");
   click(doc.getElementById("resetBtn"));
+  click(doc.getElementById("confirmNo"));
+  assert.strictEqual(evalState("S.round"), roundBefore, "cancelling reset changes nothing");
+
+  click(doc.getElementById("resetBtn"));
+  click(doc.getElementById("confirmYes"));
   assert.strictEqual(evalState("S.phase"), "reveal", "reset button starts a fresh round");
   assert.strictEqual(evalState("S.round"), 1, "reset button restarts at round 1");
   assert.ok(evalState("S.players.every(p => p.score === 0)"), "reset keeps players but clears scores");
   assert.strictEqual(evalState("S.players.length"), 4, "reset keeps the players");
 
-  console.log("Smoke test passed: 15 themes, 15 fonts, dual colors, random imposter, vote changes, finalize step, ranking, play again, reset");
+  console.log("Smoke test passed: 16 themes, 15 fonts, dual colors, random imposter, vote changes, finalize step, ranking, in-page confirm, play again, reset");
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

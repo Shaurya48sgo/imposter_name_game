@@ -19,7 +19,8 @@ const THEMES = [
   ["ocean", "Ocean", "#2dd4bf", "#02121a"],
   ["mocha", "Mocha", "#c08552", "#0f0906"],
   ["vapor", "Vapor", "#ff71ce", "#120a24"],
-  ["sunset", "Sunset", "#ff8a4c", "#140612"]
+  ["sunset", "Sunset", "#ff8a4c", "#140612"],
+  ["forest", "Forest", "#86efac", "#020a04"]
 ];
 const FONTS = [
   ["sans", "Sans", "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"],
@@ -105,6 +106,9 @@ function renderTopbar() {
     `<button class="tdot${UI.theme === id ? " on" : ""}" data-theme="${id}" title="${label}" style="background:${c};color:${c}"></button>`
   ).join("");
   tr.querySelectorAll("[data-theme]").forEach(b => b.onclick = () => { UI.theme = b.dataset.theme; applyUI(); });
+  const tLabel = (THEMES.find(t => t[0] === UI.theme) || THEMES[0])[1];
+  const fLabel = (FONTS.find(f => f[0] === UI.font) || FONTS[0])[1];
+  $("uiLabel").textContent = tLabel + " theme \u00b7 " + fLabel + " font";
   const fr = $("fontRow");
   fr.innerHTML = FONTS.map(([id, label, stack]) =>
     `<button class="fchip${UI.font === id ? " on" : ""}" data-font="${id}" style="font-family:${stack}">${label}</button>`
@@ -457,10 +461,11 @@ function renderResults() {
       `<span class="spacer"></span><b class="score">${p.score}</b></div>`).join("")}</div>`;
   $("nextBtn").onclick = () => startRound();
   $("playAgainBtn").onclick = () => {
-    if (!confirm("Play again? Scores reset, same players.")) return;
-    S.round = 0;
-    S.players.forEach(p => { p.score = 0; });
-    startRound();
+    askConfirm("Play again? Scores reset, same players.", () => {
+      S.round = 0;
+      S.players.forEach(p => { p.score = 0; });
+      startRound();
+    });
   };
   $("setupBtn").onclick = () => {
     S.phase = "setup";
@@ -469,6 +474,26 @@ function renderResults() {
     render();
   };
 }
+
+let confirmCb = null;
+
+function askConfirm(msg, cb) {
+  confirmCb = cb;
+  $("confirmMsg").textContent = msg;
+  $("confirmModal").classList.remove("hidden");
+}
+
+function closeConfirm() {
+  confirmCb = null;
+  $("confirmModal").classList.add("hidden");
+}
+
+$("confirmYes").onclick = () => {
+  const cb = confirmCb;
+  closeConfirm();
+  if (cb) cb();
+};
+$("confirmNo").onclick = closeConfirm;
 
 function init() {
   loadUI();
@@ -488,11 +513,13 @@ $("customColor2").oninput = () => { pickColor2 = $("customColor2").value; render
 $("solidBtn").onclick = () => { pickColor2 = null; render(); };
 $("dualBtn").onclick = () => { pickColor2 = pickColor2 || opposite(pickColor); render(); };
 $("resetBtn").onclick = () => {
-  if (!confirm("Reset the game? Same players, scores back to 0, brand new round.")) return;
   if (S.players.length < MIN_PLAYERS) return toast("Need at least " + MIN_PLAYERS + " players");
-  S.round = 0;
-  S.players.forEach(p => { p.score = 0; });
-  startRound();
+  askConfirm("Reset the game? Same players, scores back to 0, brand new round.", () => {
+    S.round = 0;
+    S.players.forEach(p => { p.score = 0; });
+    startRound();
+    toast("Game reset \u2014 scores cleared, round 1");
+  });
 };
 $("toVoteBtn").onclick = () => {
   if (S.players.some(p => !p.seen)) return toast("Everyone must see their note first");
@@ -500,18 +527,20 @@ $("toVoteBtn").onclick = () => {
   render();
 };
 $("newGameBtn").onclick = () => {
-  if (!confirm("Clear all players and scores?")) return;
-  S = newState();
-  pickColor = COLORS[0];
-  render();
+  askConfirm("Clear all players and scores?", () => {
+    S = newState();
+    pickColor = COLORS[0];
+    render();
+  });
 };
 $("abandonBtn").onclick = () => {
-  if (!confirm("Abandon this round? Finished rounds keep their scores.")) return;
-  if (S.phase === "reveal" || S.phase === "vote" || S.phase === "finalize") S.round--;
-  S.phase = "setup"; S.current = null; S.lastResult = null;
-  S.openId = null; S.votingId = null; S.pendingTarget = null; S.finalizeId = null;
-  S.players.forEach(p => { p.seen = false; p.vote = null; });
-  render();
+  askConfirm("Abandon this round? Finished rounds keep their scores.", () => {
+    if (S.phase === "reveal" || S.phase === "vote" || S.phase === "finalize") S.round--;
+    S.phase = "setup"; S.current = null; S.lastResult = null;
+    S.openId = null; S.votingId = null; S.pendingTarget = null; S.finalizeId = null;
+    S.players.forEach(p => { p.seen = false; p.vote = null; });
+    render();
+  });
 };
 
 init();
