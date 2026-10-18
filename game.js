@@ -37,12 +37,11 @@ const FONTS = [
   ["lemontea", "Lemon Tea", "'Lemon Tea',Georgia,cursive"],
   ["honey", "Honey", "'Honey','Comic Sans MS',cursive"],
   ["vampire", "Vampire Wars", "'Vampire Wars','Creepster',fantasy"],
-  ["mustang", "Black Mustang", "'Black Mustang','Courier New',monospace"],
   ["stay", "Stay With Me", "'Stay With Me','Comic Sans MS',cursive"],
   ["papernotes", "Paper Notes", "'Paper Notes','Bradley Hand',cursive"]
 ];
 
-window.APP_V = 6;
+window.APP_V = 7;
 
 let S = null;
 let UI = { theme: "blood", font: "auto" };

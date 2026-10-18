@@ -9,7 +9,6 @@
 @font-face{font-family:"Lemon Tea";src:url("fonts/lemontea-400.woff2") format("woff2");font-weight:400;font-display:swap}
 @font-face{font-family:"Honey";src:url("fonts/honey-400.woff2") format("woff2");font-weight:400;font-display:swap}
 @font-face{font-family:"Vampire Wars";src:url("fonts/vampire-400.woff2") format("woff2");font-weight:400;font-display:swap}
-@font-face{font-family:"Black Mustang";src:url("fonts/mustang-400.woff2") format("woff2");font-weight:400;font-display:swap}
 @font-face{font-family:"Stay With Me";src:url("fonts/stay-400.woff2") format("woff2");font-weight:400;font-display:swap}
 @font-face{font-family:"Paper Notes";src:url("fonts/papernotes-400.woff2") format("woff2");font-weight:400;font-display:swap}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -158,7 +157,6 @@ html[data-font="hill"]{--font:"Haunted Hill","Creepster",fantasy}
 html[data-font="lemontea"]{--font:"Lemon Tea",Georgia,cursive}
 html[data-font="honey"]{--font:"Honey","Comic Sans MS",cursive}
 html[data-font="vampire"]{--font:"Vampire Wars","Creepster",fantasy}
-html[data-font="mustang"]{--font:"Black Mustang","Courier New",monospace}
 html[data-font="stay"]{--font:"Stay With Me","Comic Sans MS",cursive}
 html[data-font="papernotes"]{--font:"Paper Notes","Bradley Hand",cursive}
 

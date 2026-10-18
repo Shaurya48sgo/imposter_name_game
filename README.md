@@ -49,9 +49,9 @@ The imposter is decided secretly **before** the reveal starts: every player is n
 Tap **THEME** (centered at the top, next to RESET) to open the style panel on the right — every theme and font is listed by name, and your pick is applied instantly and saved to your browser.
 
 - **Themes (17):** Blood (default red/black), Forest (light green on black), Night Sky (starry navy), **Noir** (flat monochrome), **Casefile** (flat sepia), **Paper** (light cream), **Holo** (pastel iridescent), Neon, Toxic, Abyss, Royal, Rose, Gold, Frost, Ghost, Vapor, Sunset
-- **Fonts (16):** Default (system), Display, plus bundled offline fonts: Comic, Typewriter, Horror, Marker, Manuscript, Sci-Fi, Pixel, Haunted Hill, Lemon Tea, Honey, Vampire Wars, Black Mustang, Stay With Me, Paper Notes
+- **Fonts (15):** Default (system), Display, plus bundled offline fonts: Comic, Typewriter, Horror, Marker, Manuscript, Sci-Fi, Pixel, Haunted Hill, Lemon Tea, Honey, Vampire Wars, Stay With Me, Paper Notes
 
-Lemon Tea, Honey, Vampire Wars, Black Mustang, Stay With Me, Paper Notes and Haunted Hill come from downloads on [DaFont](https://www.dafont.com) — they are mostly free for personal use; check each font's license page before any commercial use. All fonts are bundled locally, so the game stays fully offline.
+Lemon Tea, Honey, Vampire Wars, Stay With Me, Paper Notes and Haunted Hill come from downloads on [DaFont](https://www.dafont.com) — they are mostly free for personal use; check each font's license page before any commercial use. All fonts are bundled locally, so the game stays fully offline.
 
 ## Run it locally
 
@@ -80,7 +80,7 @@ To run the smoke test, install jsdom first: `npm i -D jsdom`.
 | File | Purpose |
 |---|---|
 | `index.html` | Screens for setup, reveal, voting, results |
-| `style.css` | Theme system (17 themes, 16 fonts) + all screens |
+| `style.css` | Theme system (17 themes, 15 fonts) + all screens |
 | `words.js` | Word bank: 60 words x 5 categories, 3 hint levels each |
 | `logic.js` | Pure rule functions (word picking, scoring) |
 | `game.js` | UI, state machine, localStorage persistence |
