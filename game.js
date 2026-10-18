@@ -41,7 +41,7 @@ const FONTS = [
   ["papernotes", "Paper Notes", "'Paper Notes','Bradley Hand',cursive"]
 ];
 
-window.APP_V = 7;
+window.APP_V = 8;
 
 let S = null;
 let UI = { theme: "blood", font: "auto" };
@@ -163,8 +163,13 @@ addEventListener("visibilitychange", () => { if (S) save(); });
 addEventListener("pagehide", () => { if (S) save(); });
 
 function drawImposter() {
-  const idx = Math.floor(Math.random() * S.players.length);
-  return S.players[idx].id;
+  const prev = S.current ? S.current.imposterId : null;
+  const pool = S.players.filter(p => p.id !== prev);
+  const candidates = pool.length ? pool : S.players;
+  const rnd = (typeof crypto !== "undefined" && crypto.getRandomValues)
+    ? crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296
+    : Math.random();
+  return candidates[Math.floor(rnd * candidates.length)].id;
 }
 
 function render() {

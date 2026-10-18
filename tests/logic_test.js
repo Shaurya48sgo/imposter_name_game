@@ -87,6 +87,15 @@ const { pickWord, computeScoring, luminance, opposite } = require("../logic.js")
 }
 
 {
+  const catWords = ["food", "drink", "animal", "place", "object", "sport", "game"];
+  Object.values(WORDS).flat().forEach(e => {
+    assert.ok(/^[a-z]+$/.test(e.vague), e.w + " vague hint must be a single trait word: " + e.vague);
+    assert.ok(!catWords.includes(e.vague), e.w + " vague hint must not be the category");
+    assert.notStrictEqual(e.vague, e.w.toLowerCase(), e.w + " vague hint must not be the word itself");
+  });
+}
+
+{
   assert.ok(luminance("#ffffff") > 0.9);
   assert.ok(luminance("#000000") < 0.01);
   assert.ok(luminance("#22d3ee") > 0.4);

@@ -86,13 +86,35 @@ async function main() {
     return ids;
   };
 
+  click(doc.querySelector('#closenessRow [data-cl="vague"]'));
+  assert.strictEqual(evalState("S.settings.closeness"), "vague", "vague closeness selected");
+
   const realRandom = window.Math.random;
-  window.Math.random = () => 0;
+  const realCrypto = window.crypto ? window.crypto.getRandomValues : null;
+  const stubRandom = value => {
+    window.Math.random = () => value;
+    if (window.crypto) window.crypto.getRandomValues = arr => { arr[0] = Math.floor(value * 4294967296); return arr; };
+  };
+  const restoreRandom = () => {
+    window.Math.random = realRandom;
+    if (window.crypto && realCrypto) window.crypto.getRandomValues = realCrypto;
+  };
+
+  stubRandom(0);
   click(doc.getElementById("startBtn"));
-  window.Math.random = realRandom;
+  restoreRandom();
   assert.strictEqual(evalState("S.phase"), "reveal");
   const impId = evalState("S.current.imposterId");
-  assert.strictEqual(impId, evalState("S.players[0].id"), "random number 0 picks the first numbered player");
+  assert.strictEqual(impId, evalState("S.players[0].id"), "lowest random value picks the first listed player");
+
+  const hint = evalState("S.current.hint");
+  assert.ok(/^[a-z]+$/.test(hint), "vague hint is a single trait word, got: " + hint);
+  assert.ok(!["food", "drink", "animal", "place", "object", "sport", "game"].includes(hint), "vague hint never reveals the category");
+
+  const playerIds = evalState("S.players.map(p => p.id)");
+  const draws = evalState("Array.from({ length: 60 }, () => drawImposter())");
+  assert.ok(draws.every(id => playerIds.includes(id)), "imposter draws only real players");
+  assert.ok(draws.every(id => id !== impId), "a fresh draw never repeats the current imposter");
 
   let allIds = revealAll();
   assert.strictEqual(evalState("S.players.every(p => p.seen)"), true);
@@ -157,12 +179,13 @@ async function main() {
     else assert.strictEqual(p.score, 0, "wrong voters get 0");
   }
 
-  window.Math.random = () => 0.999999;
+  stubRandom(0.999999);
   click(doc.getElementById("nextBtn"));
-  window.Math.random = realRandom;
+  restoreRandom();
   assert.strictEqual(evalState("S.phase"), "reveal");
   const imp2 = evalState("S.current.imposterId");
-  assert.strictEqual(imp2, evalState("S.players[3].id"), "random number near 1 picks the last numbered player");
+  assert.notStrictEqual(imp2, impId, "the same imposter never repeats back-to-back");
+  assert.strictEqual(imp2, evalState("S.players[3].id"), "highest random value picks the last remaining player");
   revealAll();
 
   click(doc.getElementById("toVoteBtn"));
@@ -199,7 +222,7 @@ async function main() {
   assert.strictEqual(evalState("S.round"), 1, "reset button restarts at round 1");
   assert.ok(evalState("S.players.every(p => p.score === 0)"), "reset keeps players but clears scores");
 
-  console.log("Smoke test passed: theme panel (17 themes, 15 fonts), solid colors, random imposter, self-serve voting with abstain + changes, rare-catch scoring, ranking, reset");
+  console.log("Smoke test passed: theme panel (17 themes, 15 fonts), solid colors, single-trait vague hints, no-repeat crypto-random imposter, self-serve voting with abstain + changes, rare-catch scoring, ranking, reset");
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
