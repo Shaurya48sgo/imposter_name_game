@@ -31,18 +31,20 @@ async function main() {
   click(doc.getElementById("themeBtn"));
   assert.strictEqual(doc.getElementById("themePanel").classList.contains("hidden"), false, "theme button opens the panel");
   assert.strictEqual(doc.querySelectorAll("#themeRow [data-theme]").length, 17, "17 themes offered");
-  assert.strictEqual(doc.querySelectorAll("#fontRow .fchip").length, 24, "24 fonts offered");
+  assert.strictEqual(doc.querySelectorAll("#fontRow .fchip").length, 16, "16 fonts offered");
   assert.strictEqual(doc.documentElement.dataset.theme, "blood", "blood theme is default");
   click(doc.querySelector('#themeRow [data-theme="night"]'));
   assert.strictEqual(doc.documentElement.dataset.theme, "night", "night sky theme works");
   click(doc.querySelector('#themeRow [data-theme="forest"]'));
   assert.strictEqual(doc.documentElement.dataset.theme, "forest", "forest theme works");
+  click(doc.querySelector('#themeRow [data-theme="noir"]'));
+  assert.strictEqual(doc.documentElement.dataset.theme, "noir", "noir theme works");
   click(doc.querySelector('#themeRow [data-theme="blood"]'));
   assert.ok(doc.getElementById("uiLabel").textContent.includes("Blood"), "active theme is labelled");
-  click(doc.querySelector('#fontRow [data-font="zombie"]'));
-  assert.strictEqual(doc.documentElement.dataset.font, "zombie", "dafont font applies");
-  assert.ok(doc.getElementById("uiBadge").textContent.includes("Zombie"), "top badge shows the font");
-  click(doc.querySelector('#fontRow [data-font="sans"]'));
+  click(doc.querySelector('#fontRow [data-font="honey"]'));
+  assert.strictEqual(doc.documentElement.dataset.font, "honey", "dafont font applies");
+  assert.ok(doc.getElementById("uiBadge").textContent.includes("Honey"), "top badge shows the font");
+  click(doc.querySelector('#fontRow [data-font="auto"]'));
   click(doc.getElementById("panelClose"));
   assert.strictEqual(doc.getElementById("themePanel").classList.contains("hidden"), true, "panel closes");
   assert.ok(doc.getElementById("uiBadge").textContent.includes("Blood"), "top badge shows the theme");
@@ -197,7 +199,7 @@ async function main() {
   assert.strictEqual(evalState("S.round"), 1, "reset button restarts at round 1");
   assert.ok(evalState("S.players.every(p => p.score === 0)"), "reset keeps players but clears scores");
 
-  console.log("Smoke test passed: theme panel (17 themes, 24 fonts), solid colors, random imposter, self-serve voting with abstain + changes, rare-catch scoring, ranking, reset");
+  console.log("Smoke test passed: theme panel (17 themes, 16 fonts), solid colors, random imposter, self-serve voting with abstain + changes, rare-catch scoring, ranking, reset");
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

@@ -6,54 +6,46 @@ const CLOSENESS = [["close", "Close"], ["medium", "Medium"], ["vague", "Vague"]]
 const MIN_PLAYERS = 3, MAX_PLAYERS = 12;
 const THEMES = [
   ["blood", "Blood", "#ff3b52", "#0b0203"],
-  ["neon", "Neon", "#22d3ee", "#0a0a14"],
-  ["toxic", "Toxic", "#39ff14", "#050a04"],
-  ["abyss", "Abyss", "#4f7cff", "#03060f"],
-  ["ember", "Ember", "#ff8c1a", "#0c0502"],
+  ["neon", "Neon", "#22d3ee", "#050514"],
+  ["toxic", "Toxic", "#39ff14", "#04120b"],
+  ["abyss", "Abyss", "#67e8f9", "#020a14"],
   ["royal", "Royal", "#b06bff", "#0d0518"],
   ["rose", "Rose", "#ff4d94", "#12030a"],
   ["gold", "Gold", "#f5c445", "#0c0903"],
   ["frost", "Frost", "#67e8f9", "#061018"],
   ["ghost", "Ghost", "#e5e7eb", "#0a0a0a"],
-  ["hazard", "Hazard", "#facc15", "#0d0d05"],
-  ["ocean", "Ocean", "#2dd4bf", "#02121a"],
-  ["mocha", "Mocha", "#c08552", "#0f0906"],
   ["vapor", "Vapor", "#ff71ce", "#120a24"],
   ["sunset", "Sunset", "#ff8a4c", "#140612"],
   ["forest", "Forest", "#86efac", "#020a04"],
-  ["night", "Night Sky", "#8ab4ff", "#030616"]
+  ["night", "Night Sky", "#8ab4ff", "#030616"],
+  ["noir", "Noir", "#e4e4e7", "#101014"],
+  ["casefile", "Casefile", "#d6b278", "#14100a"],
+  ["paper", "Paper", "#b45309", "#f5efe4"],
+  ["holo", "Holo", "#c4b5fd", "#0e0b16"]
 ];
 const FONTS = [
-  ["sans", "Sans", "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"],
-  ["rounded", "Rounded", "ui-rounded,'Varela Round','Nunito','Trebuchet MS',system-ui,sans-serif"],
-  ["serif", "Serif", "Georgia,'Times New Roman',serif"],
-  ["mono", "Mono", "ui-monospace,'Cascadia Mono','Roboto Mono',Consolas,monospace"],
+  ["auto", "Default", "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"],
   ["display", "Display", "Impact,'Arial Black','Franklin Gothic Medium',sans-serif"],
   ["comic", "Comic", "'Comic Neue','Comic Sans MS','Chalkboard SE',cursive"],
   ["typewriter", "Typewriter", "'Special Elite',Courier,'Courier New',monospace"],
   ["horror", "Horror", "'Creepster',Impact,'Arial Black',fantasy"],
-  ["gothic", "Gothic", "'Pirata One','UnifrakturMaguntia',Papyrus,serif"],
-  ["bangers", "Bangers", "'Bangers','Comic Sans MS',cursive"],
   ["marker", "Marker", "'Permanent Marker','Bradley Hand',cursive"],
   ["manuscript", "Manuscript", "'IM Fell English',Georgia,serif"],
-  ["deco", "Deco", "'Monoton','Copperplate',fantasy"],
   ["scifi", "Sci-Fi", "'Orbitron',system-ui,sans-serif"],
   ["pixel", "Pixel", "'Press Start 2P',monospace"],
-  ["zombie", "Zombie", "'Curse of the Zombie',Impact,fantasy"],
   ["hill", "Haunted Hill", "'Haunted Hill','Creepster',fantasy"],
-  ["christmare", "Christmare", "'Christmare','Creepster',cursive"],
-  ["eleanor", "Eleanor", "'Haunting Eleanor',Georgia,serif"],
-  ["walking", "Dead Walking", "'Dead Font Walking',Impact,fantasy"],
-  ["crawlers", "Crawlers", "'Creepy Crawlers','Comic Sans MS',cursive"],
-  ["cute", "Cute Notes", "'Cute Notes','Comic Sans MS',cursive"],
-  ["chasing", "Chasing Cars", "'KG Chasing Cars','Comic Sans MS',cursive"],
-  ["moonstar", "Moonstar", "'Moonstar',Georgia,serif"]
+  ["lemontea", "Lemon Tea", "'Lemon Tea',Georgia,cursive"],
+  ["honey", "Honey", "'Honey','Comic Sans MS',cursive"],
+  ["vampire", "Vampire Wars", "'Vampire Wars','Creepster',fantasy"],
+  ["mustang", "Black Mustang", "'Black Mustang','Courier New',monospace"],
+  ["stay", "Stay With Me", "'Stay With Me','Comic Sans MS',cursive"],
+  ["papernotes", "Paper Notes", "'Paper Notes','Bradley Hand',cursive"]
 ];
 
-window.APP_V = 5;
+window.APP_V = 6;
 
 let S = null;
-let UI = { theme: "blood", font: "sans" };
+let UI = { theme: "blood", font: "auto" };
 let pickColor = COLORS[0], heldOnce = false, audioCtx = null, toastT = null;
 
 const $ = id => document.getElementById(id);

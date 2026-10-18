@@ -36,22 +36,22 @@ Edge cases, decided for fairness (easy to change in `logic.js`):
 
 ## Hint closeness (configurable each round)
 
-Hints are deliberately cryptic — never a direct description:
+Hints are **category tags, never a clue to the exact word** — they tell the imposter what kind of thing it is, not which one:
 
-- **Close** — an indirect consequence, never a description ("The box never opens gently" for *Pizza*)
-- **Medium** — mood or context only ("A circle divided beyond reason")
-- **Vague** — a single abstract word ("Corners")
+- **Close** — category + extra tags ("food, baked, round" for *Pizza*; "wildlife, animal, tall, spots" for *Giraffe*)
+- **Medium** — category + one tag ("food, baked")
+- **Vague** — just the category ("food", "animal", "place", "object", "sport")
 
 The imposter is decided secretly **before** the reveal starts: every player is numbered and one random number is drawn — a plain uniform random pick, so anyone can be the imposter (including twice in a row). If you prefer forced rotation, that is easy to change in `drawImposter()` in `game.js`.
 
 ## Themes & fonts
 
-Tap **THEME** (top-left) to open the style panel on the right — every theme and font is listed by name, and your pick is applied instantly and saved to your browser.
+Tap **THEME** (centered at the top, next to RESET) to open the style panel on the right — every theme and font is listed by name, and your pick is applied instantly and saved to your browser.
 
-- **Themes (17):** Blood (default red/black), Forest (light green on black), Night Sky (starry navy), Neon, Toxic, Abyss, Ember, Royal, Rose, Gold, Frost, Ghost, Hazard, Ocean, Mocha, Vapor, Sunset
-- **Fonts (24):** Sans, Rounded, Serif, Mono, Display, plus bundled offline fonts: Comic, Typewriter, Horror, Gothic, Bangers, Marker, Manuscript, Deco, Sci-Fi, Pixel, Zombie, Haunted Hill, Christmare, Eleanor, Dead Walking, Crawlers, Cute Notes, Chasing Cars, Moonstar
+- **Themes (17):** Blood (default red/black), Forest (light green on black), Night Sky (starry navy), **Noir** (flat monochrome), **Casefile** (flat sepia), **Paper** (light cream), **Holo** (pastel iridescent), Neon, Toxic, Abyss, Royal, Rose, Gold, Frost, Ghost, Vapor, Sunset
+- **Fonts (16):** Default (system), Display, plus bundled offline fonts: Comic, Typewriter, Horror, Marker, Manuscript, Sci-Fi, Pixel, Haunted Hill, Lemon Tea, Honey, Vampire Wars, Black Mustang, Stay With Me, Paper Notes
 
-The last nine come from downloads on [DaFont](https://www.dafont.com) — they are mostly free for personal use; check each font's license page before any commercial use. All fonts are bundled locally, so the game stays fully offline.
+Lemon Tea, Honey, Vampire Wars, Black Mustang, Stay With Me, Paper Notes and Haunted Hill come from downloads on [DaFont](https://www.dafont.com) — they are mostly free for personal use; check each font's license page before any commercial use. All fonts are bundled locally, so the game stays fully offline.
 
 ## Run it locally
 
@@ -80,7 +80,7 @@ To run the smoke test, install jsdom first: `npm i -D jsdom`.
 | File | Purpose |
 |---|---|
 | `index.html` | Screens for setup, reveal, voting, results |
-| `style.css` | Theme system (17 themes, 24 fonts) + all screens |
+| `style.css` | Theme system (17 themes, 16 fonts) + all screens |
 | `words.js` | Word bank: 60 words x 5 categories, 3 hint levels each |
 | `logic.js` | Pure rule functions (word picking, scoring) |
 | `game.js` | UI, state machine, localStorage persistence |
@@ -95,8 +95,8 @@ To run the smoke test, install jsdom first: `npm i -D jsdom`.
 
 ## Adding words
 
-Add entries to `words.js` — every word needs three hints, kept cryptic on purpose:
+Add entries to `words.js` — every word needs three tag-style hints (category plus loose traits, never a clue to the exact word):
 
 ```js
-{ w: "Pizza", close: "The box never opens gently", medium: "A circle divided beyond reason", vague: "Corners" }
+{ w: "Giraffe", close: "wildlife, animal, tall, spots", medium: "animal, wildlife", vague: "animal" }
 ```
